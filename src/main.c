@@ -16,7 +16,11 @@ int32_t main(void)
     // wprintf(L"%lc\n", star);
 
     // list_input_devices_and_find_keyboard();
-    detect_keyboard();
+
+    printf("Press the enter key...\n");
+    // funnily enough this seems to detect the enter key event from starting the program
+    const i8 keyboard_fd = detect_keyboard();
+    handle_keyboard_events(keyboard_fd);
 
     return EXIT_SUCCESS;
 }

@@ -67,7 +67,6 @@ static u8 count_input_devices(void) {
 
     u8 count = 0;
     for (struct dirent* entry = readdir(dir); entry != NULL; entry = readdir(dir)) {
-        // printf("%s\n", entry->d_name);
         const bool found_event_device = (strncmp(entry->d_name, "event", 5) == 0);
         if (found_event_device) {
             count += 1;
@@ -98,7 +97,6 @@ static i8 detect_keyboard(void) {
 
         snprintf(input_device_path, MAX_PATH, "/dev/input/event%ld", i);
         input_device_file_descriptors[i] = open(input_device_path, O_RDONLY | O_NONBLOCK);
-        printf("fd %ld: %d\n", i, input_device_file_descriptors[i]);
     }
 
     // iterate through until enter key press is detected
@@ -121,9 +119,7 @@ static i8 detect_keyboard(void) {
             if (event.code == KEY_ENTER) {
                 keyboard_found = true;
                 keyboard_fd = input_device_fd;
-
-                printf("Found keyboard!!!\n");
-                printf("Keyboard is fd: %d\n", keyboard_fd);
+                printf("Found keyboard\n");
             }
         }
 
@@ -132,6 +128,7 @@ static i8 detect_keyboard(void) {
     }
 
     // close all input devices that aren't the detected one
+    // TODO(CMHJ): implement this
 
     return keyboard_fd;
 }

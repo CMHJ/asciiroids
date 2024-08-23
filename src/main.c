@@ -22,6 +22,8 @@ int32_t main(void) {
     const i8 keyboard_fd = detect_keyboard();
     handle_keyboard_events(keyboard_fd);
 
+    // TODO(CMHJ): clear stdin of all keyboard inputs after pressing 'q'
+
     set_terminal_echo(true);
 
     return EXIT_SUCCESS;

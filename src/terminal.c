@@ -29,6 +29,7 @@ static void terminal_set_settings(const bool enable) {
  * pressed while playing the game.
  */
 static void terminal_flush_stdin(void) {
+    // TODO(CMHJ): update this flush function?
     char c;
     while (true) {
         if (read(STDIN_FILENO, &c, 1) == 1) {

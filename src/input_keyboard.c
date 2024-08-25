@@ -5,57 +5,76 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
-
 #include <unistd.h>
-void usleep(unsigned int useconds); // get usleep with c99 enabled
+void usleep(unsigned int useconds);  // get usleep with c99 enabled
 
 #include "types.h"
 
 static const usize MAX_PATH = 255;
+enum button_state { RELEASED, PRESSED, LAST_HELD_REPEATING };
 
-static void handle_keyboard_events(const i8 fd) {
-    bool running = true;
+static void keyboard_state_update(const i8 fd, controller_state* ctrlr_state) {
     struct input_event event;
-    while (running) {
+    // TODO(CMHJ): change into for loop?
+    while (true) {
         i8 n = read(fd, &event, sizeof(event));
         if (n < (i8)sizeof(event)) {
-            // no event to read
-            continue;
+            // no event to read, done updating state
+            break;
         }
 
+        // we don't care about anything that isn't a key press
         if (event.type != EV_KEY) {
             continue;
         }
 
-        // exit when player presses 'q'
-        if (event.code == KEY_Q) {
-            running = false;
+        switch (event.code) {
+            case KEY_Q: {
+                if (event.value == RELEASED) {
+                    ctrlr_state->quit = false;
+                } else if (event.value == PRESSED) {
+                    ctrlr_state->quit = true;
+                }
+                break;
+            }
+            case KEY_UP: {
+                if (event.value == RELEASED) {
+                    ctrlr_state->up = false;
+                } else if (event.value == PRESSED) {
+                    ctrlr_state->up = true;
+                }
+                break;
+            }
+            case KEY_LEFT: {
+                if (event.value == RELEASED) {
+                    ctrlr_state->left = false;
+                } else if (event.value == PRESSED) {
+                    ctrlr_state->left = true;
+                }
+                break;
+            }
+            case KEY_RIGHT: {
+                if (event.value == RELEASED) {
+                    ctrlr_state->right = false;
+                } else if (event.value == PRESSED) {
+                    ctrlr_state->right = true;
+                }
+                break;
+            }
+            case KEY_SPACE: {
+                if (event.value == RELEASED) {
+                    ctrlr_state->shoot = false;
+                } else if (event.value == PRESSED) {
+                    ctrlr_state->shoot = true;
+                }
+                break;
+            }
+            default: {
+                // do nothing
+                break;
+            }
         }
-
-        const char* key_state_text;
-        switch (event.value) {
-        case 0: {
-            key_state_text = "Released";
-            break;
-        }
-        case 1: {
-            key_state_text = "Pressed";
-            break;
-        }
-        case 2: {
-            key_state_text = "Held";
-            break;
-        }
-        default: {
-            key_state_text = "Unknown";
-            break;
-        }
-        }
-
-        printf("Key %d: %s\n", event.code, key_state_text);
     }
-
-    close(fd);
 }
 
 static u8 count_input_devices(void) {
@@ -78,8 +97,9 @@ static u8 count_input_devices(void) {
     return count;
 }
 
-// returns file descriptor for keyboard input device
-static i8 detect_keyboard(void) {
+/* Returns file descriptor for keyboard input device.
+Caller's responsibility to close the file descriptor. */
+static i8 keyboard_detect(void) {
     i8 keyboard_fd = -1;
 
     // count input devices
@@ -128,7 +148,13 @@ static i8 detect_keyboard(void) {
     }
 
     // close all input devices that aren't the detected one
-    // TODO(CMHJ): implement this
+    for (usize i = 0; i < input_devices_count; ++i) {
+        const i8 input_device_fd = input_device_file_descriptors[i];
+
+        if (input_device_fd != keyboard_fd) {
+            close(input_device_fd);
+        }
+    }
 
     return keyboard_fd;
 }

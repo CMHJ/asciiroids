@@ -15,16 +15,30 @@ int32_t main(void) {
     // wchar_t star = 0x2605;
     // wprintf(L"%lc\n", star);
 
-    set_terminal_echo(false);
+    terminal_setup();
 
     printf("Press the enter key...\n");
     // funnily enough this seems to detect the enter key event from starting the program
-    const i8 keyboard_fd = detect_keyboard();
-    handle_keyboard_events(keyboard_fd);
+    const i8 keyboard_fd = keyboard_detect();
 
-    // TODO(CMHJ): clear stdin of all keyboard inputs after pressing 'q'
+    u32 i = 0;
+    for (bool running = true; running; ++i) {
+        static controller_state keyboard_controller_state = {0};
+        keyboard_state_update(keyboard_fd, &keyboard_controller_state);
 
-    set_terminal_echo(true);
+        if (keyboard_controller_state.quit) {
+            running = false;
+        }
+
+        printf("%d: Up: %d, Left: %d, Right: %d, Shoot: %d\n", i, keyboard_controller_state.up,
+               keyboard_controller_state.left, keyboard_controller_state.right, keyboard_controller_state.shoot);
+
+        sleep(1);
+    }
+
+    close(keyboard_fd);
+
+    terminal_teardown();
 
     return EXIT_SUCCESS;
 }

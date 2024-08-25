@@ -1,8 +1,6 @@
 #ifndef ASCIIROIDS_TYPES_H
 #define ASCIIROIDS_TYPES_H
 
-#include <stdint.h>
-#include <stddef.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

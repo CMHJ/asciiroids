@@ -30,4 +30,5 @@ typedef struct controller_state {
     bool shoot;
     bool quit;
 } controller_state;
-#endif // ASCIIROIDS_TYPES_H
+
+#endif  // ASCIIROIDS_TYPES_H

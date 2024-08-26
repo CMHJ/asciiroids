@@ -29,4 +29,16 @@ typedef struct controller_state {
     bool quit;
 } controller_state;
 
+typedef struct player_state {
+    v2 pos;
+    f32 yaw;
+} player_state;
+
+#define PLAYERS 1
+
+typedef struct game_state {
+    controller_state controllers[PLAYERS];
+    player_state players[PLAYERS];
+} game_state;
+
 #endif  // ASCIIROIDS_TYPES_H

@@ -1,5 +1,6 @@
-#include <stdbool.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -29,14 +30,9 @@ static void terminal_set_settings(const bool enable) {
  * pressed while playing the game.
  */
 static void terminal_flush_stdin(void) {
-    // TODO(CMHJ): update this flush function?
-    char c;
-    while (true) {
-        if (read(STDIN_FILENO, &c, 1) == 1) {
-            // this should catch the 'q' pressed from trying to exit the game
-            if (c == 'q') break;
-        } else {
-            perror("read");
+    // this should clear all inputs and catch the 'q' pressed from trying to exit the game
+    for (char c = -1; read(STDIN_FILENO, &c, 1) == 1;) {
+        if (c == 'q') {
             break;
         }
     }

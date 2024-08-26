@@ -21,6 +21,11 @@ typedef double f64;
 typedef size_t usize;
 typedef ptrdiff_t isize;
 
+typedef struct v2 {
+    f32 x;
+    f32 y;
+} v2;
+
 typedef struct controller_state {
     bool up;
     bool left;

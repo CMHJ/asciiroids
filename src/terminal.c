@@ -41,6 +41,10 @@ static void terminal_flush_stdin(void) {
     }
 }
 
+void terminal_clear_screen() {
+    wprintf(L"\033[H\033[J");
+}
+
 /* Switch to an alternate screen buffer. */
 void terminal_save_buffer(void) {
     wprintf(L"\033[?1049h");
@@ -71,6 +75,8 @@ void terminal_cursor_show(void) {
 static void terminal_setup(void) {
     terminal_set_settings(true);
     terminal_save_buffer();
+    terminal_clear_screen();
+    terminal_reset_cursor_position();
     terminal_cursor_hide();
 }
 
@@ -81,20 +87,21 @@ static void terminal_teardown(void) {
     terminal_restore_buffer();
 }
 
-void buffer_render(wchar_t* buffer, const usize height, const usize width) {
+void buffer_render(screen_buffer* buffer) {
     terminal_reset_cursor_position();
-    for (usize row = 0; row < height; ++row) {
-        for (usize col = 0; col < width; ++col) {
-            wprintf(L"%lc", buffer[(width * row) + col]);
+
+    for (usize row = 0; row < buffer->height; ++row) {
+        for (usize col = 0; col < buffer->width; ++col) {
+            wprintf(L"%lc", buffer->data[(buffer->width * row) + col]);
         }
         wprintf(L"\n");
     }
 }
 
-void buffer_set(wchar_t buffer[], const usize height, const usize width, const wchar_t c) {
-    for (usize row = 0; row < height; ++row) {
-        for (usize col = 0; col < width; ++col) {
-            buffer[(width * row) + col] = c;
+void buffer_set(screen_buffer* buffer, const wchar_t c) {
+    for (usize row = 0; row < buffer->height; ++row) {
+        for (usize col = 0; col < buffer->width; ++col) {
+            buffer->data[(buffer->width * row) + col] = c;
         }
     }
 }

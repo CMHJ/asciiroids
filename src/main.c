@@ -7,18 +7,15 @@
 #include "terminal.c"
 #include "types.h"
 
-#define WIDTH 80
-#define HEIGHT 24
-#define FPS 60
+static const wchar_t light_shade = L'\u2591';
+static const wchar_t dark_shade = L'\u2593';
 
 int32_t main(void) {
     setlocale(LC_CTYPE, "");
     terminal_setup();
 
-    wchar_t screen_buffer[HEIGHT * WIDTH] = {0};
-    static const wchar_t light_shade = L'\u2591';
-    static const wchar_t dark_shade = L'\u2593';
-    buffer_set(screen_buffer, HEIGHT, WIDTH, light_shade);
+    screen_buffer buffer = {.width = SCREEN_BUFFER_WIDTH, .height = SCREEN_BUFFER_HEIGHT, .data = {0}};
+    buffer_set(&buffer, light_shade);
 
     game_state game_state_data = {0};
     controller_state* keyboard_controller_state = &game_state_data.controllers[0];
@@ -37,20 +34,20 @@ int32_t main(void) {
         }
 
         // visualise keyboard input
-        screen_buffer[1] = keyboard_controller_state->left ? dark_shade : light_shade;
-        screen_buffer[2] = keyboard_controller_state->up ? dark_shade : light_shade;
-        screen_buffer[3] = keyboard_controller_state->right ? dark_shade : light_shade;
-        screen_buffer[0] = keyboard_controller_state->shoot ? dark_shade : light_shade;
+        buffer.data[1] = keyboard_controller_state->left ? dark_shade : light_shade;
+        buffer.data[2] = keyboard_controller_state->up ? dark_shade : light_shade;
+        buffer.data[3] = keyboard_controller_state->right ? dark_shade : light_shade;
+        buffer.data[0] = keyboard_controller_state->shoot ? dark_shade : light_shade;
 
-        buffer_render(screen_buffer, HEIGHT, WIDTH);
+        buffer_render(&buffer);
 
         // TODO(CMHJ): calculate elapsed time in cycle and enforce true 60 FPS
         static const u32 microseconds_in_second = 1000000;
-        usleep(microseconds_in_second / FPS);
+        static const u32 fps = 60;
+        usleep(microseconds_in_second / fps);
     }
 
     close(keyboard_fd);
-
     terminal_teardown();
 
     return EXIT_SUCCESS;

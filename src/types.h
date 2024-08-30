@@ -21,6 +21,15 @@ typedef double f64;
 typedef size_t usize;
 typedef ptrdiff_t isize;
 
+#define SCREEN_BUFFER_WIDTH 80
+#define SCREEN_BUFFER_HEIGHT 24
+typedef struct screen_buffer {
+    const usize width;
+    const usize height;
+    wchar_t data[SCREEN_BUFFER_WIDTH * SCREEN_BUFFER_HEIGHT];
+    // wchar_t* data;
+} screen_buffer;
+
 typedef struct v2 {
     f32 x;
     f32 y;

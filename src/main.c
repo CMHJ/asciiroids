@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <wchar.h>
 
-#include "input_keyboard.c"
+#include "input.c"
 #include "terminal.c"
 #include "types.h"
 

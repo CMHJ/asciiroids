@@ -11,47 +11,9 @@
 #define HEIGHT 24
 #define FPS 60
 
-/* Switch to an alternate screen buffer. */
-void terminal_save_buffer(void) {
-    wprintf(L"\033[?1049h");
-    fflush(stdout);
-}
-
-/* Switch back to the main screen buffer. */
-void terminal_restore_buffer(void) {
-    wprintf(L"\033[?1049l");
-    fflush(stdout);
-}
-
-void terminal_reset_cursor_position(void) {
-    wprintf(L"\033[H");
-    fflush(stdout);
-}
-
-void buffer_render(wchar_t* buffer, const usize height, const usize width) {
-    terminal_reset_cursor_position();
-    for (usize row = 0; row < height; ++row) {
-        for (usize col = 0; col < width; ++col) {
-            wprintf(L"%lc", buffer[(width * row) + col]);
-        }
-        wprintf(L"\n");
-    }
-    terminal_reset_cursor_position();
-}
-
-void buffer_set(wchar_t buffer[], const usize height, const usize width, const wchar_t c) {
-    for (usize row = 0; row < height; ++row) {
-        for (usize col = 0; col < width; ++col) {
-            buffer[(width * row) + col] = c;
-        }
-    }
-}
-
 int32_t main(void) {
     setlocale(LC_CTYPE, "");
-    terminal_save_buffer();
     terminal_setup();
-    terminal_reset_cursor_position();
 
     wchar_t screen_buffer[HEIGHT * WIDTH] = {0};
     static const wchar_t light_shade = L'\u2591';
@@ -90,7 +52,6 @@ int32_t main(void) {
     close(keyboard_fd);
 
     terminal_teardown();
-    terminal_restore_buffer();
 
     return EXIT_SUCCESS;
 }

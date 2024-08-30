@@ -97,8 +97,10 @@ static u8 count_input_devices(void) {
     return count;
 }
 
-/* Returns file descriptor for keyboard input device.
-Caller's responsibility to close the file descriptor. */
+/*
+ * Returns file descriptor for keyboard input device.
+ * Caller's responsibility to close the file descriptor.
+ */
 static i8 keyboard_detect(void) {
     i8 keyboard_fd = -1;
 

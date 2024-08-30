@@ -7,3 +7,7 @@ Requires root to detect the keyboard and read the keyboard inputs directly as op
 ```sh
 ./build.sh
 ```
+
+# Todo
+
+- [ ] Investigate adding a `game` user that is a member of `input` group such that playing the game and getting inputs doesn't require root.

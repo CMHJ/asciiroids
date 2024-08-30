@@ -10,7 +10,7 @@ void usleep(unsigned int useconds);  // get usleep with c99 enabled
 
 #include "types.h"
 
-static const usize MAX_PATH = 255;
+#define MAX_PATH 255
 enum button_state { RELEASED, PRESSED, LAST_HELD_REPEATING };
 
 static void keyboard_state_update(const i8 fd, controller_state* ctrlr_state) {

@@ -8,7 +8,7 @@ if [ "$(whoami)" != "root" ]; then
 fi
 
 TOP="$(dirname "$(readlink -f "$0")")"
-OPTIONS="-std=c99 -g -Wall -Wextra -Wpedantic -fsanitize=address,undefined"
+OPTIONS="-std=c99 -O0 -g -Wall -Wextra -Wpedantic -fsanitize=address,undefined"
 
 mkdir -p "$TOP/build"
 

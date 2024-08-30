@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 typedef int8_t i8;
 typedef int16_t i16;
@@ -19,7 +20,7 @@ typedef float f32;
 typedef double f64;
 
 typedef size_t usize;
-typedef ptrdiff_t isize;
+typedef ssize_t isize;
 
 #define SCREEN_BUFFER_WIDTH 80
 #define SCREEN_BUFFER_HEIGHT 24
@@ -27,7 +28,6 @@ typedef struct screen_buffer {
     const usize width;
     const usize height;
     wchar_t data[SCREEN_BUFFER_WIDTH * SCREEN_BUFFER_HEIGHT];
-    // wchar_t* data;
 } screen_buffer;
 
 typedef struct v2 {
@@ -49,7 +49,6 @@ typedef struct player_state {
 } player_state;
 
 #define PLAYERS 1
-
 typedef struct game_state {
     bool running;
     i8 controller_fds[PLAYERS];

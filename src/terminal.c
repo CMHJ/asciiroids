@@ -88,6 +88,9 @@ static void terminal_teardown(void) {
 }
 
 void buffer_render(screen_buffer* buffer) {
+    // TODO(CMHJ): remove these debug lines
+    // terminal_clear_screen();
+
     terminal_reset_cursor_position();
 
     for (usize row = 0; row < buffer->height; ++row) {

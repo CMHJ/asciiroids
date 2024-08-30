@@ -3,12 +3,27 @@
 #include <stdlib.h>
 #include <wchar.h>
 
+#include "asciiroids.h"
 #include "input.c"
 #include "terminal.c"
 #include "types.h"
 
-static const wchar_t light_shade = L'\u2591';
-static const wchar_t dark_shade = L'\u2593';
+static void game_state_init(game_state* state) {
+    state->running = true;
+
+    // get inputs
+    // TODO(CMHJ): convert these back to printf and remove wide versions
+    wprintf(L"Press the enter key...\n");
+    // funnily enough this seems to detect the enter key event from starting the program
+    const i8 keyboard_fd = keyboard_detect();
+    state->controller_fds[0] = keyboard_fd;
+}
+
+static void game_state_deinit(game_state* state) {
+    for (u8 player = 0; player < PLAYERS; ++player) {
+        close(state->controller_fds[player]);
+    }
+}
 
 int32_t main(void) {
     setlocale(LC_CTYPE, "");
@@ -17,27 +32,13 @@ int32_t main(void) {
     screen_buffer buffer = {.width = SCREEN_BUFFER_WIDTH, .height = SCREEN_BUFFER_HEIGHT, .data = {0}};
     buffer_set(&buffer, light_shade);
 
-    game_state game_state_data = {0};
-    controller_state* keyboard_controller_state = &game_state_data.controllers[0];
+    game_state state = {0};
+    game_state_init(&state);
 
-    // TODO(CMHJ): convert these back to printf and remove wide versions
-    wprintf(L"Press the enter key...\n");
-    // funnily enough this seems to detect the enter key event from starting the program
-    const i8 keyboard_fd = keyboard_detect();
+    while (state.running) {
+        update_inputs(&state);
 
-    u32 i = 0;
-    for (bool running = true; running; ++i) {
-        keyboard_state_update(keyboard_fd, keyboard_controller_state);
-
-        if (keyboard_controller_state->quit) {
-            running = false;
-        }
-
-        // visualise keyboard input
-        buffer.data[1] = keyboard_controller_state->left ? dark_shade : light_shade;
-        buffer.data[2] = keyboard_controller_state->up ? dark_shade : light_shade;
-        buffer.data[3] = keyboard_controller_state->right ? dark_shade : light_shade;
-        buffer.data[0] = keyboard_controller_state->shoot ? dark_shade : light_shade;
+        run_game_loop(&state, &buffer);
 
         buffer_render(&buffer);
 
@@ -47,7 +48,7 @@ int32_t main(void) {
         usleep(microseconds_in_second / fps);
     }
 
-    close(keyboard_fd);
+    game_state_deinit(&state);
     terminal_teardown();
 
     return EXIT_SUCCESS;

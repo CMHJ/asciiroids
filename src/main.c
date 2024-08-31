@@ -128,6 +128,7 @@ i32 main(i32 argc, char** argv) {
 
     setlocale(LC_CTYPE, "");
     terminal_setup();
+    // TODO(CMHJ): add trap for Ctrl-C signal so that terminal settings are reset properly
 
     screen_buffer buffer = {.width = SCREEN_BUFFER_WIDTH, .height = SCREEN_BUFFER_HEIGHT, .data = {0}};
     buffer_set(&buffer, light_shade);

@@ -15,7 +15,6 @@ enum button_state { RELEASED, PRESSED, LAST_HELD_REPEATING };
 
 static void keyboard_state_update(const i8 fd, controller_state* ctrlr_state) {
     struct input_event event;
-    // TODO(CMHJ): change into for loop?
     while (true) {
         i8 n = read(fd, &event, sizeof(event));
         if (n < (i8)sizeof(event)) {
@@ -119,8 +118,8 @@ static i8 keyboard_detect(void) {
     char input_device_path[MAX_PATH];
     for (usize i = 0; i < input_devices_count; ++i) {
         if (i > max_input_devices) {
-            printf("Reached maximum number of input devices\n");
-            exit(1);
+            fprintf(stderr, "Reached maximum number of input devices\n");
+            exit(EXIT_FAILURE);
         }
 
         snprintf(input_device_path, MAX_PATH, "/dev/input/event%ld", i);
@@ -147,7 +146,6 @@ static i8 keyboard_detect(void) {
             if (event.code == KEY_ENTER) {
                 keyboard_found = true;
                 keyboard_fd = input_device_fd;
-                printf("Found keyboard\n");
             }
         }
 

@@ -18,9 +18,7 @@ gcc -shared -std=c99 -g -o "$TOP"/build/libasciiroids.so "$TOP"/src/asciiroids.c
 gcc \
     $OPTIONS \
     -o "$TOP"/build/asciiroids \
-    "$TOP"/src/main.c \
-    -L "$TOP"/build -l asciiroids \
-    -Wl,-rpath,"$TOP"/build
+    "$TOP"/src/main.c
 
 chown root:$(id -g) "$TOP"/build/asciiroids
 chmod u+s "$TOP"/build/asciiroids

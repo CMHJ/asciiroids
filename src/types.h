@@ -48,13 +48,4 @@ typedef struct player_state {
     f32 yaw;
 } player_state;
 
-#define PLAYERS 1
-typedef struct game_state {
-    bool running;
-    void* game_lib_handle;
-    i8 controller_fds[PLAYERS];
-    controller_state controllers[PLAYERS];
-    player_state players[PLAYERS];
-} game_state;
-
 #endif  // ASCIIROIDS_TYPES_H

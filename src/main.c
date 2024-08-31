@@ -2,6 +2,8 @@
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <time.h>
 #include <wchar.h>
 
 #include "asciiroids.h"
@@ -63,12 +65,38 @@ static void string_concat(char* dst, char* src) {
     }
 }
 
+static bool file_has_changed(char* file_path, i64* last_modify_time) {
+    bool changed = false;
+    struct stat file_stat;
+
+    if (stat(file_path, &file_stat) != 0) {
+        perror("stat");
+        exit(EXIT_FAILURE);
+    }
+
+    if (*last_modify_time != (i64)file_stat.st_mtime) {
+        *last_modify_time = (i64)file_stat.st_mtime;
+        changed = true;
+    }
+
+    return changed;
+}
+
 static void game_code_load(game_code* code, char* lib_path) {
     // load game code
-    code->game_lib_handle = dlopen(lib_path, RTLD_LAZY);
-    if (code->game_lib_handle == NULL) {
+    static const u8 MAX_RETRIES = 3;
+    for (u8 retries = 0; code->game_lib_handle == NULL; ++retries) {
+        // TODO(CMHJ): change this to check if file is being written to by trying to acquire a file lock
+        if (retries >= MAX_RETRIES) {
         fprintf(stderr, "Error loading library: %s\n", dlerror());
         exit(EXIT_FAILURE);
+        }
+
+        if (retries != 0) {
+            static const u32 RETRY_DELAY_US = 10000;
+            usleep(RETRY_DELAY_US);
+        }
+        code->game_lib_handle = dlopen(lib_path, RTLD_LAZY);
     }
 
     // cast to intptr is to shut gcc up about the conversion of an void* object pointer to a function pointer
@@ -93,6 +121,11 @@ i32 main(i32 argc, char** argv) {
     (void)argc;
     char* binary_path = argv[0];
 
+    // assumes game lib is in same dir as binary
+    char game_lib_path[MAX_PATH] = {0};
+    get_dir_path(game_lib_path, binary_path);
+    string_concat(game_lib_path, "/libasciiroids.so");
+
     setlocale(LC_CTYPE, "");
     terminal_setup();
 
@@ -102,33 +135,28 @@ i32 main(i32 argc, char** argv) {
     game_state state = {0};
     game_state_init(&state);
 
+    i64 game_lib_last_modify_time = 0;
     game_code code = {0};
     code.run_game_loop = run_game_loop_stub;
-
-    // assumes game lib is in same dir as binary
-    char game_lib_path[MAX_PATH] = {0};
-    get_dir_path(game_lib_path, binary_path);
-    string_concat(game_lib_path, "/libasciiroids.so");
+    game_code_load(&code, game_lib_path);
 
     while (state.running) {
-        // TODO(CMHJ): add check that library has changed on disk
+        // this will run the first time to load the code as the timestamp will not match
+        if (file_has_changed(game_lib_path, &game_lib_last_modify_time)) {
+            game_code_unload(&code);
         game_code_load(&code, game_lib_path);
+        }
+
         update_inputs(&state);
 
         code.run_game_loop(&state, &buffer);
 
         buffer_render(&buffer);
 
-        game_code_unload(&code);
-
         // TODO(CMHJ): calculate elapsed time in cycle and enforce true 60 FPS
         static const u32 microseconds_in_second = 1000000;
         static const u32 fps = 60;
-        // usleep(microseconds_in_second / fps);
-
-        // TODO(CMHJ): remove this and add code to check if lib has changed on disk, and if so reload
-        // this just gives enough time for the compilation to happen so that it doesn't segfault
-        usleep(1000000);
+        usleep(microseconds_in_second / fps);
     }
 
     game_code_unload(&code);

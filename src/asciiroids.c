@@ -17,8 +17,8 @@ RUN_GAME_LOOP(run_game_loop) {
 
     // run either line and then recompile to see that it gets dynamically loaded
     for (usize i = 5; i < buffer->width * buffer->height; ++i) {
-        if (i % 2) buffer->data[i] = dark_shade;
+        // if (i % 2) buffer->data[i] = dark_shade;
 
-        // buffer->data[i] = light_shade;
+        buffer->data[i] = light_shade;
     }
 }

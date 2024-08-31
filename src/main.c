@@ -5,6 +5,7 @@
 #include <wchar.h>
 
 #include "asciiroids.h"
+#include "constants.h"
 #include "input.c"
 #include "terminal.c"
 #include "types.h"

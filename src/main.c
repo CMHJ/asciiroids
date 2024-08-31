@@ -32,12 +32,11 @@ static void game_state_deinit(game_state* state) {
     }
 }
 
-static void game_code_load(game_code* code, char* binary_path) {
-    // TODO(CMHJ): refactor lib path code into separate function
-    char buf[MAX_PATH] = {0};
+static void get_dir_path(char* buf, char* binary_path) {
+    // TODO(CMHJ): don't use strlen
+    usize size_of_binary_path = strlen(binary_path);
 
     // get pointer to one past last character of directory path
-    usize size_of_binary_path = strlen(binary_path);
     char* last_dir_slash = binary_path + size_of_binary_path;
     for (char* scan = binary_path; *scan; ++scan) {
         if (*scan == '/') {
@@ -46,24 +45,38 @@ static void game_code_load(game_code* code, char* binary_path) {
     }
 
     // copy to path to buf
-    char* dst = buf;
-    char* src = binary_path;
-    for (; src != last_dir_slash; ++dst, ++src) {
+    for (char *dst = buf, *src = binary_path; src != last_dir_slash; ++dst, ++src) {
         *dst = *src;
     }
+}
 
-    // append lib name to buf
-    char* libname = "/libasciiroids.so";
-    src = libname;
+static void string_concat(char* dst, char* src) {
+    // advance dst to null terminator
+    while (*dst != '\0') {
+        ++dst;
+    }
+
+    // append src to dst
     for (; *src != '\0'; ++dst, ++src) {
         *dst = *src;
     }
+}
 
+static void game_code_load(game_code* code, char* lib_path) {
     // load game code
-    code->game_lib_handle = dlopen(buf, RTLD_LAZY);
+    code->game_lib_handle = dlopen(lib_path, RTLD_LAZY);
+    if (code->game_lib_handle == NULL) {
+        fprintf(stderr, "Error loading library: %s\n", dlerror());
+        exit(EXIT_FAILURE);
+    }
 
     // cast to intptr is to shut gcc up about the conversion of an void* object pointer to a function pointer
     code->run_game_loop = (run_game_loop_function_type*)(intptr_t)dlsym(code->game_lib_handle, "run_game_loop");
+    if (code->run_game_loop == NULL) {
+        fprintf(stderr, "Error loading function: %s\n", dlerror());
+        dlclose(code->game_lib_handle);
+        exit(EXIT_FAILURE);
+    }
 }
 
 static void game_code_unload(game_code* code) {
@@ -91,9 +104,14 @@ i32 main(i32 argc, char** argv) {
     game_code code = {0};
     code.run_game_loop = run_game_loop_stub;
 
+    // assumes game lib is in same dir as binary
+    char game_lib_path[MAX_PATH] = {0};
+    get_dir_path(game_lib_path, binary_path);
+    string_concat(game_lib_path, "/libasciiroids.so");
+
     while (state.running) {
         // TODO(CMHJ): add check that library has changed on disk
-        game_code_load(&code, binary_path);
+        game_code_load(&code, game_lib_path);
         update_inputs(&state);
 
         code.run_game_loop(&state, &buffer);

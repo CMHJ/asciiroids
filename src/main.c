@@ -12,6 +12,8 @@
 #include "terminal.c"
 #include "types.h"
 
+// TODO(CMHJ): replace all uses of stdlib functions like printf with write
+
 typedef struct game_code {
     void* game_lib_handle;
     run_game_loop_function_type* run_game_loop;
@@ -39,7 +41,7 @@ static void get_dir_path(char* buf, char* binary_path) {
     // TODO(CMHJ): don't use strlen
     usize size_of_binary_path = strlen(binary_path);
 
-    // get pointer to one past last character of directory path
+    // get pointer to last character of directory path
     char* last_dir_slash = binary_path + size_of_binary_path;
     for (char* scan = binary_path; *scan; ++scan) {
         if (*scan == '/') {
@@ -118,7 +120,7 @@ i32 main(i32 argc, char** argv) {
 
     setlocale(LC_CTYPE, "");
     terminal_setup();
-    // TODO(CMHJ): add trap for Ctrl-C signal so that terminal settings are reset properly
+    // TODO(CMHJ): add trap for Ctrl-C signal to do cleanup so that terminal settings are reset properly
 
     screen_buffer buffer = {.width = SCREEN_BUFFER_WIDTH, .height = SCREEN_BUFFER_HEIGHT, .data = {0}};
     buffer_set(&buffer, light_shade);
@@ -137,7 +139,7 @@ i32 main(i32 argc, char** argv) {
     while (state.running) {
         if (file_has_changed(game_lib_path, &game_lib_last_modify_time)) {
             game_code_unload(&code);
-        game_code_load(&code, game_lib_path);
+            game_code_load(&code, game_lib_path);
         }
 
         update_inputs(&state);

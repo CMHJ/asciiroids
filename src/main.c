@@ -70,8 +70,9 @@ static bool file_has_changed(char* file_path, i64* last_modify_time) {
     struct stat file_stat;
 
     if (stat(file_path, &file_stat) != 0) {
-        perror("stat");
-        exit(EXIT_FAILURE);
+        // TODO(CMHJ): log error? ignore and carry on if file isn't ready
+        changed = false;
+        return changed;
     }
 
     if (*last_modify_time != (i64)file_stat.st_mtime) {
@@ -83,19 +84,8 @@ static bool file_has_changed(char* file_path, i64* last_modify_time) {
 }
 
 static void game_code_load(game_code* code, char* lib_path) {
-    // load game code
-    static const u8 MAX_RETRIES = 3;
-    for (u8 retries = 0; code->game_lib_handle == NULL; ++retries) {
-        // TODO(CMHJ): change this to check if file is being written to by trying to acquire a file lock
-        if (retries >= MAX_RETRIES) {
-        fprintf(stderr, "Error loading library: %s\n", dlerror());
-        exit(EXIT_FAILURE);
-        }
-
-        if (retries != 0) {
-            static const u32 RETRY_DELAY_US = 10000;
-            usleep(RETRY_DELAY_US);
-        }
+    // spin until library is available
+    while (code->game_lib_handle == NULL) {
         code->game_lib_handle = dlopen(lib_path, RTLD_LAZY);
     }
 
@@ -136,13 +126,15 @@ i32 main(i32 argc, char** argv) {
     game_state state = {0};
     game_state_init(&state);
 
+    // init game lib modify time using file_has_changed
     i64 game_lib_last_modify_time = 0;
+    file_has_changed(game_lib_path, &game_lib_last_modify_time);
+
     game_code code = {0};
     code.run_game_loop = run_game_loop_stub;
     game_code_load(&code, game_lib_path);
 
     while (state.running) {
-        // this will run the first time to load the code as the timestamp will not match
         if (file_has_changed(game_lib_path, &game_lib_last_modify_time)) {
             game_code_unload(&code);
         game_code_load(&code, game_lib_path);

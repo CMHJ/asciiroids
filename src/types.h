@@ -46,6 +46,7 @@ typedef struct controller_state {
 typedef struct player_state {
     v2 pos;
     f32 yaw;
+    v2 vel;
 } player_state;
 
 #endif  // ASCIIROIDS_TYPES_H

@@ -6,9 +6,13 @@
 const wchar_t light_shade = L'\u2591';
 const wchar_t dark_shade = L'\u2593';
 
+#define FPS 60
+
+typedef enum game_mode { GAME_NEW, GAME_RUNNING, GAME_QUIT } game_mode;
+
 #define PLAYERS 1
 typedef struct game_state {
-    bool running;
+    game_mode mode;
     i8 controller_fds[PLAYERS];
     controller_state controllers[PLAYERS];
     player_state players[PLAYERS];

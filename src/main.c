@@ -20,7 +20,7 @@ typedef struct game_code {
 } game_code;
 
 static void game_state_init(game_state* state) {
-    state->running = true;
+    state->mode = GAME_NEW;
 
     // get inputs
     // TODO(CMHJ): convert these back to printf and remove wide versions
@@ -136,7 +136,7 @@ i32 main(i32 argc, char** argv) {
     code.run_game_loop = run_game_loop_stub;
     game_code_load(&code, game_lib_path);
 
-    while (state.running) {
+    while (state.mode != GAME_QUIT) {
         if (file_has_changed(game_lib_path, &game_lib_last_modify_time)) {
             game_code_unload(&code);
             game_code_load(&code, game_lib_path);
@@ -150,8 +150,7 @@ i32 main(i32 argc, char** argv) {
 
         // TODO(CMHJ): calculate elapsed time in cycle and enforce true 60 FPS
         static const u32 microseconds_in_second = 1000000;
-        static const u32 fps = 60;
-        usleep(microseconds_in_second / fps);
+        usleep(microseconds_in_second / FPS);
     }
 
     game_code_unload(&code);

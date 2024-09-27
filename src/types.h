@@ -27,6 +27,7 @@ typedef ssize_t isize;
 typedef struct screen_buffer {
     const usize width;
     const usize height;
+    const usize size;
     wchar_t data[SCREEN_BUFFER_WIDTH * SCREEN_BUFFER_HEIGHT];
 } screen_buffer;
 

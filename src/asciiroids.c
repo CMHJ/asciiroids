@@ -2,6 +2,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <wchar.h>
 
 #define PI 3.14159265358979323846f
@@ -9,6 +10,14 @@
 // player constants
 #define YAW_DEG_PER_SEC 180.0f
 #define BOOST_ACCELERATION 20.0f
+
+#undef assert
+static void exit_with_message(const char* exp, const char* file, const char* func, const i32 line) {
+    fprintf(stderr, "Assertion failed: %s (%s: %s: %d)\n", exp, file, func, line);
+    fflush(NULL);
+    exit(1);
+}
+#define assert(exp) ((void)((exp) || (exit_with_message(#exp, __FILE__, __func__, __LINE__), 0)))
 
 static void print_xy(screen_buffer* buffer, u32 x, u32 y, wchar_t* string, usize n) {
     wchar_t* dst = &buffer->data[(y * buffer->width) + x];

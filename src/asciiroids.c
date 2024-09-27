@@ -90,10 +90,15 @@ static void render_debug_overlay(screen_buffer* buffer, player_state* player, co
     buffer->data[buffer->size - 1] = controller->right ? dark_shade : light_shade;
 }
 
-static void render_player_ship(screen_buffer* buffer, player_state* player)
-{
-    usize index = SCREEN_BUFFER_HEIGHT - player->pos.y;
-    buffer->data[((SCREEN_BUFFER_HEIGHT - (usize)player->pos.y) * buffer->width) + (usize)player->pos.x] = dark_shade;
+static void render_player_ship(screen_buffer* buffer, player_state* player) {
+    const usize x = (usize)player->pos.x;
+    const usize y = (SCREEN_BUFFER_HEIGHT - 1) - (usize)player->pos.y;
+    const usize index = (y * buffer->width) + x;
+
+    assert(index >= 0);
+    assert(index < buffer->size);
+
+    buffer->data[index] = dark_shade;
 }
 
 RUN_GAME_LOOP(run_game_loop) {

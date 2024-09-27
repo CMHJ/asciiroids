@@ -30,7 +30,7 @@ static void buffer_clear(screen_buffer* buffer) {
     }
 }
 
-static f32 to_radians(const f32 degrees) {
+static inline f32 to_radians(const f32 degrees) {
     return degrees * (PI / 180.0f);
 }
 

@@ -57,20 +57,20 @@ static void update_player_input(player_state* player, controller_state* controll
     }
 }
 
-static void update_player_pos(player_state* player) {
+static void update_player_pos(screen_buffer* buffer, player_state* player) {
     player->pos.x += player->vel.x / FPS;
-    if (player->pos.x >= SCREEN_BUFFER_WIDTH) {
-        player->pos.x -= SCREEN_BUFFER_WIDTH;
+    if (player->pos.x >= buffer->width) {
+        player->pos.x -= buffer->width;
 
     } else if (player->pos.x < 0.0f) {
-        player->pos.x += SCREEN_BUFFER_WIDTH;
+        player->pos.x += buffer->width;
     }
 
     player->pos.y += player->vel.y / FPS;
-    if (player->pos.y >= SCREEN_BUFFER_HEIGHT)
-        player->pos.y -= SCREEN_BUFFER_HEIGHT;
+    if (player->pos.y >= buffer->height)
+        player->pos.y -= buffer->height;
     else if (player->pos.y < 0.0f)
-        player->pos.y += SCREEN_BUFFER_HEIGHT;
+        player->pos.y += buffer->height;
 }
 
 static void render_debug_overlay(screen_buffer* buffer, player_state* player, controller_state* controller) {
@@ -92,7 +92,7 @@ static void render_debug_overlay(screen_buffer* buffer, player_state* player, co
 
 static void render_player_ship(screen_buffer* buffer, player_state* player) {
     const usize x = (usize)player->pos.x;
-    const usize y = (SCREEN_BUFFER_HEIGHT - 1) - (usize)player->pos.y;
+    const usize y = (buffer->height - 1) - (usize)player->pos.y;
     const usize index = (y * buffer->width) + x;
 
     assert(index >= 0);
@@ -114,12 +114,12 @@ RUN_GAME_LOOP(run_game_loop) {
     if (state->mode == GAME_NEW) {
         state->mode = GAME_RUNNING;
 
-        player1->pos = (v2){SCREEN_BUFFER_WIDTH / 2.0f, SCREEN_BUFFER_HEIGHT / 2.0f};
+        player1->pos = (v2){buffer->width / 2.0f, buffer->height / 2.0f};
         player1->yaw = 90.0f;
     }
 
     update_player_input(player1, keyboard_controller_state);
-    update_player_pos(player1);
+    update_player_pos(buffer, player1);
 
     render_debug_overlay(buffer, player1, keyboard_controller_state);
 

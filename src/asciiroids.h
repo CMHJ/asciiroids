@@ -7,6 +7,7 @@ const wchar_t no_shade = L' ';
 const wchar_t light_shade = L'\u2591';
 const wchar_t dark_shade = L'\u2593';
 
+// TODO(CMHJ): move these constants inside the array
 const wchar_t U_SHIP_N = L'\u25B2';
 const wchar_t U_SHIP_E = L'\u25BA';
 const wchar_t U_SHIP_S = L'\u25BC';

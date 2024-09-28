@@ -41,6 +41,8 @@ static inline f32 v2_mag(const v2 v) {
 
 static void update_player_input(player_state* player, controller_state* controller) {
     static const f32 MAX_VEL_MAG = 20.0f;
+
+    // TODO(CMHJ): refactor boost code
     if (controller->up) {
         v2 vel_new = (v2){player->vel.x + BOOST_ACCELERATION * cosf(to_radians(player->yaw)) / FPS,
                           player->vel.y + BOOST_ACCELERATION * sinf(to_radians(player->yaw)) / FPS};

@@ -6,6 +6,7 @@
 #include <wchar.h>
 
 #define PI 3.14159265358979323846f
+#define DEG_360 360.0f
 
 // player constants
 #define YAW_DEG_PER_SEC 180.0f
@@ -15,7 +16,7 @@
 static void exit_with_message(const char* exp, const char* file, const char* func, const i32 line) {
     fprintf(stderr, "Assertion failed: %s (%s: %s: %d)\n", exp, file, func, line);
     fflush(NULL);
-    exit(1);
+    exit(EXIT_FAILURE);
 }
 #define assert(exp) ((void)((exp) || (exit_with_message(#exp, __FILE__, __func__, __LINE__), 0)))
 
@@ -26,7 +27,7 @@ static void print_xy(screen_buffer* buffer, u32 x, u32 y, wchar_t* string, usize
 
 static void buffer_clear(screen_buffer* buffer) {
     for (usize i = 0; i < buffer->width * buffer->height; ++i) {
-        buffer->data[i] = light_shade;
+        buffer->data[i] = no_shade;
     }
 }
 
@@ -45,14 +46,14 @@ static void update_player_input(player_state* player, controller_state* controll
         player->yaw += YAW_TICK;
 
         // clip yaw to [0, 360.0)
-        if (player->yaw >= 360.0f) {
-            player->yaw -= 360.0f;
+        if (player->yaw >= DEG_360) {
+            player->yaw -= DEG_360;
         }
     } else if (controller->right && !controller->left) {
         player->yaw -= YAW_TICK;
 
         if (player->yaw < 0.0f) {
-            player->yaw += 360.0f;
+            player->yaw += DEG_360;
         }
     }
 }
@@ -98,7 +99,23 @@ static void render_player_ship(screen_buffer* buffer, player_state* player) {
     assert(index >= 0);
     assert(index < buffer->size);
 
-    buffer->data[index] = dark_shade;
+    static const f32 deg_per_segment = DEG_360 / (f32)TOTAL_DIRECTIONS;
+    const f32 deg_half_seg = deg_per_segment / 2.0f;
+
+    // offset yaw by half seg to make math easier, so there's no discontinuity before 0
+    f32 yaw = player->yaw + deg_half_seg;
+    if (yaw >= DEG_360) {
+        yaw -= DEG_360;
+    }
+
+    // get the direction segment index based on yaw
+    const f32 dir_f = yaw / deg_per_segment;
+    const ship_direction dir = dir_f;
+
+    assert(dir >= 0);
+    assert(dir < TOTAL_DIRECTIONS);
+
+    buffer->data[index] = SHIP_CHARS[dir];
 }
 
 RUN_GAME_LOOP(run_game_loop) {
@@ -122,7 +139,5 @@ RUN_GAME_LOOP(run_game_loop) {
     update_player_pos(buffer, player1);
 
     render_debug_overlay(buffer, player1, keyboard_controller_state);
-
-    // TODO(CMHJ): fix ship not rendering on the top and right side
     render_player_ship(buffer, player1);
 }

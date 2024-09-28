@@ -35,10 +35,33 @@ static inline f32 to_radians(const f32 degrees) {
     return degrees * (PI / 180.0f);
 }
 
+static inline f32 v2_mag(const v2 v) {
+    return sqrtf((v.x * v.x) + (v.y * v.y));
+}
+
 static void update_player_input(player_state* player, controller_state* controller) {
+    static const f32 MAX_VEL_MAG = 20.0f;
     if (controller->up) {
-        player->vel.x += BOOST_ACCELERATION * cosf(to_radians(player->yaw)) / FPS;
-        player->vel.y += BOOST_ACCELERATION * sinf(to_radians(player->yaw)) / FPS;
+        v2 vel_new = (v2){player->vel.x + BOOST_ACCELERATION * cosf(to_radians(player->yaw)) / FPS,
+                          player->vel.y + BOOST_ACCELERATION * sinf(to_radians(player->yaw)) / FPS};
+
+        const f32 vel_new_mag = v2_mag(vel_new);
+        if (vel_new_mag <= MAX_VEL_MAG) {
+            player->vel = vel_new;
+        } else {
+            player->vel.x -= BOOST_ACCELERATION * (player->vel.x / MAX_VEL_MAG) / FPS;
+            player->vel.y -= BOOST_ACCELERATION * (player->vel.y / MAX_VEL_MAG) / FPS;
+            const f32 vel_subbed_mag = v2_mag(player->vel);
+
+            player->vel.x += BOOST_ACCELERATION * cosf(to_radians(player->yaw)) / FPS;
+            player->vel.y += BOOST_ACCELERATION * sinf(to_radians(player->yaw)) / FPS;
+
+            // cap magnitude of velocity to handle float precision errors
+            while (v2_mag(player->vel) > MAX_VEL_MAG) {
+                player->vel.x -= 0.01f;
+                player->vel.y -= 0.01f;
+            }
+        }
     }
 
     static const f32 YAW_TICK = YAW_DEG_PER_SEC / FPS;
@@ -59,7 +82,12 @@ static void update_player_input(player_state* player, controller_state* controll
 }
 
 static void update_player_pos(screen_buffer* buffer, player_state* player) {
-    player->pos.x += player->vel.x / FPS;
+    // account for there being a difference in the height and width of characters.
+    // because chars are taller than they are wide, moving north/south is much faster than east/west.
+    // this factor accounts for that to make the speed seem smooth
+    static const f32 CHAR_SIZE_FACTOR = 2.5f;
+
+    player->pos.x += (player->vel.x * CHAR_SIZE_FACTOR) / FPS;
     if (player->pos.x >= buffer->width) {
         player->pos.x -= buffer->width;
 
@@ -81,7 +109,8 @@ static void render_debug_overlay(screen_buffer* buffer, player_state* player, co
     print_xy(buffer, 0, 21, msg_buf, wcslen(msg_buf));
     swprintf(msg_buf, sizeof(msg_buf), L"X: %.2f, Y: %.2f", player->pos.x, player->pos.y);
     print_xy(buffer, 0, 22, msg_buf, wcslen(msg_buf));
-    swprintf(msg_buf, sizeof(msg_buf), L"VelX: %.2f, VelY: %.2f", player->vel.x, player->vel.y);
+    swprintf(msg_buf, sizeof(msg_buf), L"VelX: %.2f, VelY: %.2f Mag: %.2f", player->vel.x, player->vel.y,
+             v2_mag(player->vel));
     print_xy(buffer, 0, 23, msg_buf, wcslen(msg_buf));
 
     // visualise keyboard input

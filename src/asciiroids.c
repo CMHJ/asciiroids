@@ -43,6 +43,7 @@ static void update_player_input(player_state* player, controller_state* controll
     static const f32 MAX_VEL_MAG = 20.0f;
 
     // TODO(CMHJ): refactor boost code
+    // handle boost
     if (controller->up) {
         v2 vel_new = (v2){player->vel.x + BOOST_ACCELERATION * cosf(to_radians(player->yaw)) / FPS,
                           player->vel.y + BOOST_ACCELERATION * sinf(to_radians(player->yaw)) / FPS};
@@ -66,6 +67,7 @@ static void update_player_input(player_state* player, controller_state* controll
         }
     }
 
+    // handle turning
     static const f32 YAW_TICK = YAW_DEG_PER_SEC / FPS;
     if (controller->left && !controller->right) {
         player->yaw += YAW_TICK;
@@ -79,6 +81,31 @@ static void update_player_input(player_state* player, controller_state* controll
 
         if (player->yaw < 0.0f) {
             player->yaw += DEG_360;
+        }
+    }
+
+    // handle shooting
+    if (controller->shoot) {
+        if (player->shot_cooloff_frames == 0) {
+            static const u16 shot_cooloff_frames = 5;
+            player->shot_cooloff_frames = shot_cooloff_frames;
+
+            // find a bullet slot that has expired
+            for (u8 i = 0; i < MAX_BULLETS; ++i) {
+                if (player->bullets[i].life_frames == 0) {
+                    player->bullets[i].life_frames = 60;
+                    player->bullets[i].pos = player->pos;
+                    player->bullets[i].yaw = player->yaw;
+
+                    static const f32 bullet_speed = 20.0f;
+                    player->bullets[i].vel = (v2){bullet_speed * cosf(to_radians(player->bullets[i].yaw)),
+                                                  bullet_speed * sinf(to_radians(player->bullets[i].yaw))};
+
+                    break;
+                }
+            }
+        } else {
+            player->shot_cooloff_frames -= 1;
         }
     }
 }
@@ -102,6 +129,37 @@ static void update_player_pos(screen_buffer* buffer, player_state* player) {
         player->pos.y -= buffer->height;
     else if (player->pos.y < 0.0f)
         player->pos.y += buffer->height;
+}
+
+static void update_player_bullets(screen_buffer* buffer, player_state* player) {
+    // account for there being a difference in the height and width of characters.
+    // because chars are taller than they are wide, moving north/south is much faster than east/west.
+    // this factor accounts for that to make the speed seem smooth
+    static const f32 CHAR_SIZE_FACTOR = 2.5f;
+
+    for (u8 i = 0; i < MAX_BULLETS; ++i) {
+        bullet* b = &(player->bullets[i]);
+        if (b->life_frames == 0) {
+            continue;
+        }
+
+        // tick bullet life down each frame
+        b->life_frames -= 1;
+
+        b->pos.x += (b->vel.x * CHAR_SIZE_FACTOR) / FPS;
+        if (b->pos.x >= buffer->width) {
+            b->pos.x -= buffer->width;
+
+        } else if (b->pos.x < 0.0f) {
+            b->pos.x += buffer->width;
+        }
+
+        b->pos.y += b->vel.y / FPS;
+        if (b->pos.y >= buffer->height)
+            b->pos.y -= buffer->height;
+        else if (b->pos.y < 0.0f)
+            b->pos.y += buffer->height;
+    }
 }
 
 static void render_debug_overlay(screen_buffer* buffer, player_state* player, controller_state* controller) {
@@ -149,6 +207,17 @@ static void render_player_ship(screen_buffer* buffer, player_state* player) {
     buffer->data[index] = SHIP_CHARS[dir];
 }
 
+static void render_bullets(screen_buffer* buffer, player_state* player) {
+    for (u8 i = 0; i < MAX_BULLETS; ++i) {
+        if (player->bullets[i].life_frames > 0) {
+            const usize x = (usize)player->bullets[i].pos.x;
+            const usize y = (buffer->height - 1) - (usize)player->bullets[i].pos.y;
+            const usize index = (y * buffer->width) + x;
+            buffer->data[index] = U_BULLET;
+        }
+    }
+}
+
 RUN_GAME_LOOP(run_game_loop) {
     controller_state* keyboard_controller_state = &state->controllers[0];
     player_state* player1 = &state->players[0];
@@ -168,7 +237,9 @@ RUN_GAME_LOOP(run_game_loop) {
 
     update_player_input(player1, keyboard_controller_state);
     update_player_pos(buffer, player1);
+    update_player_bullets(buffer, player1);
 
     render_debug_overlay(buffer, player1, keyboard_controller_state);
+    render_bullets(buffer, player1);
     render_player_ship(buffer, player1);
 }

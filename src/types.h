@@ -22,6 +22,8 @@ typedef double f64;
 typedef size_t usize;
 typedef ssize_t isize;
 
+// TODO(CMHJ): move game related types to asciiroids header
+
 #define SCREEN_BUFFER_WIDTH 80
 #define SCREEN_BUFFER_HEIGHT 24
 typedef struct screen_buffer {
@@ -44,10 +46,20 @@ typedef struct controller_state {
     bool quit;
 } controller_state;
 
+typedef struct bullet {
+    v2 pos;
+    f32 yaw;
+    v2 vel;
+    u16 life_frames;
+} bullet;
+
+#define MAX_BULLETS 4
 typedef struct player_state {
     v2 pos;
     f32 yaw;
     v2 vel;
+    bullet bullets[MAX_BULLETS];
+    u16 shot_cooloff_frames;
 } player_state;
 
 #endif  // ASCIIROIDS_TYPES_H

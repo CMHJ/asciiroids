@@ -3,9 +3,12 @@
 
 #include "types.h"
 
+// TODO(CMHJ): replace this with some randomly generated starscape?
 const wchar_t no_shade = L' ';
 const wchar_t light_shade = L'\u2591';
 const wchar_t dark_shade = L'\u2593';
+
+const wchar_t U_BULLET = L'\u00B7';
 
 // describe segment which is the direction that the ship is pointing
 typedef enum ship_direction {

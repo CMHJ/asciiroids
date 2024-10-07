@@ -8,7 +8,25 @@ const wchar_t NO_SHADE = L' ';
 const wchar_t LIGHT_SHADE = L'\u2591';
 const wchar_t DARK_SHADE = L'\u2593';
 
+const wchar_t BLOCK_FULL = L'\u2588';
+const wchar_t BLOCK_UPPER_HALF = L'\u2580';
+const wchar_t BLOCK_LOWER_HALF = L'\u2584';
+
+const wchar_t SAUCER_LARGE_LEFT = L'\U0001FB46';
+const wchar_t SAUCER_LARGE_LEFT_MID = L'\U0001FB41';
+const wchar_t SAUCER_LARGE_RIGHT_MID = L'\U0001FB4C';
+const wchar_t SAUCER_LARGE_RIGHT = L'\U0001FB51';
+
+const wchar_t SAUCER_SMALL_LEFT = L'\U0001FB46';
+const wchar_t SAUCER_SMALL_RIGHT = L'\U0001FB51';
+
 const wchar_t U_BULLET = L'\u00B7';
+
+#define NUMBERS_NUM 10
+const wchar_t NUMBERS[NUMBERS_NUM] = {
+    L'\U0001FBF0', L'\U0001FBF1', L'\U0001FBF2', L'\U0001FBF3', L'\U0001FBF4',
+    L'\U0001FBF5', L'\U0001FBF6', L'\U0001FBF7', L'\U0001FBF8', L'\U0001FBF9',
+};
 
 // describe segment which is the direction that the ship is pointing
 typedef enum ship_direction {

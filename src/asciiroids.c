@@ -249,4 +249,31 @@ RUN_GAME_LOOP(run_game_loop) {
     render_debug_overlay(buffer, player1, keyboard_controller_state);
     render_bullets(buffer, player1);
     render_player_ship(buffer, player1);
+
+    printwc_xy(buffer, 20, 15, BLOCK_UPPER_HALF);
+    printwc_xy(buffer, 22, 15, BLOCK_LOWER_HALF);
+
+    printwc_xy(buffer, 30, 15, BLOCK_FULL);
+    printwc_xy(buffer, 31, 15, BLOCK_FULL);
+
+    printwc_xy(buffer, 40, 15, BLOCK_FULL);
+    printwc_xy(buffer, 41, 15, BLOCK_FULL);
+    printwc_xy(buffer, 40, 16, BLOCK_FULL);
+    printwc_xy(buffer, 41, 16, BLOCK_FULL);
+    printwc_xy(buffer, 42, 15, BLOCK_FULL);
+    printwc_xy(buffer, 43, 15, BLOCK_FULL);
+    printwc_xy(buffer, 42, 16, BLOCK_FULL);
+    printwc_xy(buffer, 43, 16, BLOCK_FULL);
+
+    printwc_xy(buffer, 50, 15, SAUCER_LARGE_LEFT);
+    printwc_xy(buffer, 51, 15, SAUCER_LARGE_LEFT_MID);
+    printwc_xy(buffer, 52, 15, SAUCER_LARGE_RIGHT_MID);
+    printwc_xy(buffer, 53, 15, SAUCER_LARGE_RIGHT);
+
+    printwc_xy(buffer, 60, 15, SAUCER_SMALL_LEFT);
+    printwc_xy(buffer, 61, 15, SAUCER_SMALL_RIGHT);
+
+    for (u8 i = 0; i < NUMBERS_NUM; ++i) {
+        printwc_xy(buffer, 0 + i, 0, NUMBERS[i]);
+    }
 }

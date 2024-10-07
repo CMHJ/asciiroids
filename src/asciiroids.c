@@ -225,6 +225,57 @@ static void render_bullets(screen_buffer* buffer, player_state* player) {
     }
 }
 
+static void update_enemies(screen_buffer* buffer, enemy_state* enemies) {
+    static const f32 CHAR_SIZE_FACTOR = 2.0f;
+    // TODO(CMHJ): refactor all pos update functions into single function that updates physics
+
+    for (u8 i = 0; i < MAX_ENEMIES; ++i) {
+        enemy_state* e = &(enemies[i]);
+        if (e->type == DEAD) {
+            continue;
+        }
+
+        e->pos.x += (e->vel.x * CHAR_SIZE_FACTOR) / FPS;
+        if (e->pos.x >= buffer->width) {
+            e->pos.x -= buffer->width;
+
+        } else if (e->pos.x < 0.0f) {
+            e->pos.x += buffer->width;
+        }
+
+        e->pos.y += e->vel.y / FPS;
+        if (e->pos.y >= buffer->height)
+            e->pos.y -= buffer->height;
+        else if (e->pos.y < 0.0f)
+            e->pos.y += buffer->height;
+    }
+}
+
+static void render_enemy_asteroid_large(screen_buffer* buffer, v2 pos) {
+    static wchar_t layer[4] = {BLOCK_FULL, BLOCK_FULL, BLOCK_FULL, BLOCK_FULL};
+    print_xy(buffer, (usize)pos.x, (usize)pos.y, layer, 4);
+    print_xy(buffer, (usize)pos.x, (usize)pos.y + 1, layer, 4);
+}
+
+static void render_enemies(screen_buffer* buffer, enemy_state* enemies) {
+    for (u8 i = 0; i < MAX_ENEMIES; ++i) {
+        switch (enemies[i].type) {
+            case DEAD: {
+                // do nothing
+                break;
+            }
+            case ASTEROID_LARGE: {
+                render_enemy_asteroid_large(buffer, enemies[i].pos);
+                break;
+            }
+            default: {
+                fprintf(stderr, "Not implemented rendering for type: %d\n", enemies[i].type);
+                exit(1);
+            }
+        }
+    }
+}
+
 RUN_GAME_LOOP(run_game_loop) {
     controller_state* keyboard_controller_state = &state->controllers[0];
     player_state* player1 = &state->players[0];
@@ -240,6 +291,20 @@ RUN_GAME_LOOP(run_game_loop) {
 
         player1->pos = (v2){buffer->width / 2.0f, buffer->height / 2.0f};
         player1->yaw = 90.0f;
+
+        const u8 asteroids_num = 4;
+        for (u8 i = 0; i < asteroids_num; ++i) {
+            state->enemies[i].type = ASTEROID_LARGE;
+            const f32 angle_offset = -30.0f;
+            const f32 angle = (i * DEG_360 / asteroids_num);
+            const f32 dist_from_centre = buffer->width / 4.0f;
+            const f32 asteroid_vel_mag = 5.0f;
+            state->enemies[i].pos = (v2){dist_from_centre * cosf(to_radians(angle + angle_offset)),
+                                         dist_from_centre * sinf(to_radians(angle + angle_offset))};
+            state->enemies[i].vel = (v2){asteroid_vel_mag * cosf(to_radians(angle + angle_offset * i)),
+                                         asteroid_vel_mag * sinf(to_radians(angle + angle_offset * i))};
+            state->enemies[i].yaw = i * 150.0f;
+        }
     }
 
     update_player_input(player1, keyboard_controller_state);
@@ -250,30 +315,6 @@ RUN_GAME_LOOP(run_game_loop) {
     render_bullets(buffer, player1);
     render_player_ship(buffer, player1);
 
-    printwc_xy(buffer, 20, 15, BLOCK_UPPER_HALF);
-    printwc_xy(buffer, 22, 15, BLOCK_LOWER_HALF);
-
-    printwc_xy(buffer, 30, 15, BLOCK_FULL);
-    printwc_xy(buffer, 31, 15, BLOCK_FULL);
-
-    printwc_xy(buffer, 40, 15, BLOCK_FULL);
-    printwc_xy(buffer, 41, 15, BLOCK_FULL);
-    printwc_xy(buffer, 40, 16, BLOCK_FULL);
-    printwc_xy(buffer, 41, 16, BLOCK_FULL);
-    printwc_xy(buffer, 42, 15, BLOCK_FULL);
-    printwc_xy(buffer, 43, 15, BLOCK_FULL);
-    printwc_xy(buffer, 42, 16, BLOCK_FULL);
-    printwc_xy(buffer, 43, 16, BLOCK_FULL);
-
-    printwc_xy(buffer, 50, 15, SAUCER_LARGE_LEFT);
-    printwc_xy(buffer, 51, 15, SAUCER_LARGE_LEFT_MID);
-    printwc_xy(buffer, 52, 15, SAUCER_LARGE_RIGHT_MID);
-    printwc_xy(buffer, 53, 15, SAUCER_LARGE_RIGHT);
-
-    printwc_xy(buffer, 60, 15, SAUCER_SMALL_LEFT);
-    printwc_xy(buffer, 61, 15, SAUCER_SMALL_RIGHT);
-
-    for (u8 i = 0; i < NUMBERS_NUM; ++i) {
-        printwc_xy(buffer, 0 + i, 0, NUMBERS[i]);
-    }
+    update_enemies(buffer, state->enemies);
+    render_enemies(buffer, state->enemies);
 }

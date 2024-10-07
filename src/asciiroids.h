@@ -89,6 +89,15 @@ typedef struct player_state {
     u16 shot_cooloff_frames;
 } player_state;
 
+typedef enum enemy_type {
+    DEAD,
+    ASTEROID_SMALL,
+    ASTEROID_MEDIUM,
+    ASTEROID_LARGE,
+    SAUCER_SMALL,
+    SAUCER_LARGE,
+} enemy_type;
+
 typedef struct enemy_state {
     enemy_type type;
     v2 pos;
@@ -99,11 +108,13 @@ typedef struct enemy_state {
 typedef enum game_mode { GAME_NEW, GAME_RUNNING, GAME_QUIT } game_mode;
 
 #define PLAYERS 1
+#define MAX_ENEMIES 20
 typedef struct game_state {
     game_mode mode;
     i8 controller_fds[PLAYERS];
     controller_state controllers[PLAYERS];
     player_state players[PLAYERS];
+    enemy_state enemies[MAX_ENEMIES];
 } game_state;
 
 // define run_game_loop function type and default stub function

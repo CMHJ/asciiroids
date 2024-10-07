@@ -126,7 +126,7 @@ i32 main(i32 argc, char** argv) {
                             .height = SCREEN_BUFFER_HEIGHT,
                             .size = SCREEN_BUFFER_WIDTH * SCREEN_BUFFER_HEIGHT,
                             .data = {0}};
-    buffer_set(&buffer, light_shade);
+    buffer_set(&buffer, LIGHT_SHADE);
 
     game_state state = {0};
     game_state_init(&state);

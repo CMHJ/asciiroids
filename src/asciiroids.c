@@ -34,7 +34,7 @@ static void printwc_xy(screen_buffer* buffer, u32 x, u32 y, wchar_t c) {
 
 static void buffer_clear(screen_buffer* buffer) {
     for (usize i = 0; i < buffer->width * buffer->height; ++i) {
-        buffer->data[i] = no_shade;
+        buffer->data[i] = NO_SHADE;
     }
 }
 
@@ -181,10 +181,10 @@ static void render_debug_overlay(screen_buffer* buffer, player_state* player, co
     print_xy(buffer, 0, 23, msg_buf, wcslen(msg_buf));
 
     // visualise keyboard input
-    buffer->data[buffer->size - 4] = controller->shoot ? dark_shade : light_shade;
-    buffer->data[buffer->size - 3] = controller->left ? dark_shade : light_shade;
-    buffer->data[buffer->size - 2] = controller->up ? dark_shade : light_shade;
-    buffer->data[buffer->size - 1] = controller->right ? dark_shade : light_shade;
+    buffer->data[buffer->size - 4] = controller->shoot ? DARK_SHADE : LIGHT_SHADE;
+    buffer->data[buffer->size - 3] = controller->left ? DARK_SHADE : LIGHT_SHADE;
+    buffer->data[buffer->size - 2] = controller->up ? DARK_SHADE : LIGHT_SHADE;
+    buffer->data[buffer->size - 1] = controller->right ? DARK_SHADE : LIGHT_SHADE;
 }
 
 static void render_player_ship(screen_buffer* buffer, player_state* player) {

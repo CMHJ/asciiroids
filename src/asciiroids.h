@@ -38,6 +38,46 @@ const wchar_t SHIP_CHARS[TOTAL_DIRECTIONS] = {U_SHIP_E, U_SHIP_NE, U_SHIP_N, U_S
 
 #define FPS 60
 
+#define SCREEN_BUFFER_WIDTH 80
+#define SCREEN_BUFFER_HEIGHT 24
+typedef struct screen_buffer {
+    const usize width;
+    const usize height;
+    const usize size;
+    wchar_t data[SCREEN_BUFFER_WIDTH * SCREEN_BUFFER_HEIGHT];
+} screen_buffer;
+
+typedef struct controller_state {
+    bool up;
+    bool left;
+    bool right;
+    bool shoot;
+    bool quit;
+} controller_state;
+
+typedef struct bullet {
+    v2 pos;
+    f32 yaw;
+    v2 vel;
+    u16 life_frames;
+} bullet;
+
+#define MAX_BULLETS 4
+typedef struct player_state {
+    v2 pos;
+    f32 yaw;
+    v2 vel;
+    bullet bullets[MAX_BULLETS];
+    u16 shot_cooloff_frames;
+} player_state;
+
+typedef struct enemy_state {
+    enemy_type type;
+    v2 pos;
+    f32 yaw;
+    v2 vel;
+} enemy_state;
+
 typedef enum game_mode { GAME_NEW, GAME_RUNNING, GAME_QUIT } game_mode;
 
 #define PLAYERS 1

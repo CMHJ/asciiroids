@@ -142,7 +142,7 @@ static void update_player_bullets(screen_buffer* buffer, player_state* player) {
     // account for there being a difference in the height and width of characters.
     // because chars are taller than they are wide, moving north/south is much faster than east/west.
     // this factor accounts for that to make the speed seem smooth
-    static const f32 CHAR_SIZE_FACTOR = 2.5f;
+    static const f32 CHAR_SIZE_FACTOR = 2.0f;
 
     for (u8 i = 0; i < MAX_BULLETS; ++i) {
         bullet* b = &(player->bullets[i]);

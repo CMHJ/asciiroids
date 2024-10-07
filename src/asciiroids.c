@@ -25,6 +25,12 @@ static void print_xy(screen_buffer* buffer, u32 x, u32 y, wchar_t* string, usize
     wcsncpy(dst, string, n);
 }
 
+static void printwc_xy(screen_buffer* buffer, u32 x, u32 y, wchar_t c) {
+    static wchar_t buf[2] = {0};
+    buf[0] = c;
+    print_xy(buffer, x, y, buf, 1);
+}
+
 static void buffer_clear(screen_buffer* buffer) {
     for (usize i = 0; i < buffer->width * buffer->height; ++i) {
         buffer->data[i] = no_shade;

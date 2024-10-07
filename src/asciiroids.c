@@ -21,6 +21,7 @@ static void exit_with_message(const char* exp, const char* file, const char* fun
 #define assert(exp) ((void)((exp) || (exit_with_message(#exp, __FILE__, __func__, __LINE__), 0)))
 
 static void print_xy(screen_buffer* buffer, u32 x, u32 y, wchar_t* string, usize n) {
+    // TODO(CMHJ): add wrapping to this function
     wchar_t* dst = &buffer->data[(y * buffer->width) + x];
     wcsncpy(dst, string, n);
 }

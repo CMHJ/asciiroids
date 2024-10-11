@@ -15,6 +15,27 @@
 #include "print.c"
 #include "utility.c"
 
+static void game_init(game_state* state, screen_buffer* buffer) {
+    state->mode = GAME_RUNNING;
+
+    state->players[0].phy.pos = (v2){buffer->width / 2.0f, buffer->height / 2.0f};
+    state->players[0].phy.yaw = 90.0f;
+
+    const u8 asteroids_num = 4;
+    for (u8 i = 0; i < asteroids_num; ++i) {
+        state->enemies[i].type = ASTEROID_LARGE;
+        const f32 angle_offset = -45.0f;
+        const f32 angle = (i * DEG_360 / asteroids_num);
+        const f32 dist_from_centre = buffer->width / 4.0f;
+        const f32 asteroid_vel_mag = 5.0f;
+        state->enemies[i].phy.pos = (v2){dist_from_centre * cosf(to_radians(angle + angle_offset)),
+                                         dist_from_centre * sinf(to_radians(angle + angle_offset))};
+        state->enemies[i].phy.vel = (v2){asteroid_vel_mag * cosf(to_radians(angle + angle_offset * i)),
+                                         asteroid_vel_mag * sinf(to_radians(angle + angle_offset * i))};
+        state->enemies[i].phy.yaw = i * 150.0f;
+    }
+}
+
 static void render_debug_overlay(screen_buffer* buffer, player_state* player, controller_state* controller) {
     wchar_t msg_buf[100] = {0};
 
@@ -104,24 +125,7 @@ RUN_GAME_LOOP(run_game_loop) {
     }
 
     if (state->mode == GAME_NEW) {
-        state->mode = GAME_RUNNING;
-
-        player1->phy.pos = (v2){buffer->width / 2.0f, buffer->height / 2.0f};
-        player1->phy.yaw = 90.0f;
-
-        const u8 asteroids_num = 4;
-        for (u8 i = 0; i < asteroids_num; ++i) {
-            state->enemies[i].type = ASTEROID_LARGE;
-            const f32 angle_offset = -45.0f;
-            const f32 angle = (i * DEG_360 / asteroids_num);
-            const f32 dist_from_centre = buffer->width / 4.0f;
-            const f32 asteroid_vel_mag = 5.0f;
-            state->enemies[i].phy.pos = (v2){dist_from_centre * cosf(to_radians(angle + angle_offset)),
-                                             dist_from_centre * sinf(to_radians(angle + angle_offset))};
-            state->enemies[i].phy.vel = (v2){asteroid_vel_mag * cosf(to_radians(angle + angle_offset * i)),
-                                             asteroid_vel_mag * sinf(to_radians(angle + angle_offset * i))};
-            state->enemies[i].phy.yaw = i * 150.0f;
-        }
+        game_init(state, buffer);
     }
 
     update_player_input(player1, keyboard_controller_state);

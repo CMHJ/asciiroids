@@ -86,8 +86,7 @@ static void update_position(screen_buffer* buffer, physics* phy) {
         phy->pos.y += buffer->height;
 }
 
-static void update_enemies(screen_buffer* buffer, enemy_state* enemies)
-{
+static void update_enemies(screen_buffer* buffer, enemy_state* enemies) {
     for (u8 i = 0; i < MAX_ENEMIES; ++i) {
         enemy_state* e = &(enemies[i]);
         if (e->type == DEAD) {
@@ -98,8 +97,7 @@ static void update_enemies(screen_buffer* buffer, enemy_state* enemies)
     }
 }
 
-static void update_bullets(screen_buffer* buffer, bullet* bullets)
-{
+static void update_bullets(screen_buffer* buffer, bullet* bullets) {
     // TODO(CMHJ): make n bullets part of struct
     for (u8 i = 0; i < MAX_BULLETS; ++i) {
         bullet* b = &bullets[i];

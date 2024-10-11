@@ -94,37 +94,6 @@ static void update_player_pos(screen_buffer* buffer, player_state* player) {
         player->phy.pos.y += buffer->height;
 }
 
-static void update_player_bullets(screen_buffer* buffer, player_state* player) {
-    // account for there being a difference in the height and width of characters.
-    // because chars are taller than they are wide, moving north/south is much faster than east/west.
-    // this factor accounts for that to make the speed seem smooth
-    static const f32 CHAR_SIZE_FACTOR = 2.0f;
-
-    for (u8 i = 0; i < MAX_BULLETS; ++i) {
-        bullet* b = &(player->bullets[i]);
-        if (b->life_frames == 0) {
-            continue;
-        }
-
-        // tick bullet life down each frame
-        b->life_frames -= 1;
-
-        b->phy.pos.x += (b->phy.vel.x * CHAR_SIZE_FACTOR) / FPS;
-        if (b->phy.pos.x >= buffer->width) {
-            b->phy.pos.x -= buffer->width;
-
-        } else if (b->phy.pos.x < 0.0f) {
-            b->phy.pos.x += buffer->width;
-        }
-
-        b->phy.pos.y += b->phy.vel.y / FPS;
-        if (b->phy.pos.y >= buffer->height)
-            b->phy.pos.y -= buffer->height;
-        else if (b->phy.pos.y < 0.0f)
-            b->phy.pos.y += buffer->height;
-    }
-}
-
 static void render_player_ship(screen_buffer* buffer, player_state* player) {
     const usize x = (usize)player->phy.pos.x;
     const usize y = (buffer->height - 1) - (usize)player->phy.pos.y;

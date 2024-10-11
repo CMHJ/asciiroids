@@ -44,6 +44,55 @@ static void render_bullets(screen_buffer* buffer, player_state* player) {
     }
 }
 
+static void update_position(screen_buffer* buffer, physics* phy) {
+    // account for there being a difference in the height and width of characters.
+    // because chars are taller than they are wide, moving north/south is much faster than east/west.
+    // this factor accounts for that to make the speed seem smooth
+    static const f32 CHAR_SIZE_FACTOR = 2.5f;
+
+    phy->pos.x += (phy->vel.x * CHAR_SIZE_FACTOR) / FPS;
+    if (phy->pos.x >= buffer->width) {
+        phy->pos.x -= buffer->width;
+
+    } else if (phy->pos.x < 0.0f) {
+        phy->pos.x += buffer->width;
+    }
+
+    phy->pos.y += phy->vel.y / FPS;
+    if (phy->pos.y >= buffer->height)
+        phy->pos.y -= buffer->height;
+    else if (phy->pos.y < 0.0f)
+        phy->pos.y += buffer->height;
+}
+
+static void update_enemies(screen_buffer* buffer, enemy_state* enemies)
+{
+    for (u8 i = 0; i < MAX_ENEMIES; ++i) {
+        enemy_state* e = &(enemies[i]);
+        if (e->type == DEAD) {
+            continue;
+        }
+
+        update_position(buffer, &e->phy);
+    }
+}
+
+static void update_bullets(screen_buffer* buffer, bullet* bullets)
+{
+    // TODO(CMHJ): make n bullets part of struct
+    for (u8 i = 0; i < MAX_BULLETS; ++i) {
+        bullet* b = &bullets[i];
+        if (b->life_frames == 0) {
+            continue;
+        }
+
+        // tick bullet life down each frame
+        b->life_frames -= 1;
+
+        update_position(buffer, &b->phy);
+    }
+}
+
 RUN_GAME_LOOP(run_game_loop) {
     controller_state* keyboard_controller_state = &state->controllers[0];
     player_state* player1 = &state->players[0];
@@ -76,15 +125,15 @@ RUN_GAME_LOOP(run_game_loop) {
     }
 
     update_player_input(player1, keyboard_controller_state);
-    update_player_pos(buffer, player1);
-    update_player_bullets(buffer, player1);
+
+    update_position(buffer, &player1->phy);
+    update_bullets(buffer, player1->bullets);
+    update_enemies(buffer, state->enemies);
 
     render_debug_overlay(buffer, player1, keyboard_controller_state);
     render_bullets(buffer, player1);
-    render_player_ship(buffer, player1);
-
-    update_enemies(buffer, state->enemies);
     render_enemies(buffer, state->enemies);
+    render_player_ship(buffer, player1);
 
     for (u8 i = 0; i < buffer->width; i++) {
         wchar_t c = L'0' + (i % 10);

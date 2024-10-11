@@ -63,7 +63,7 @@ RUN_GAME_LOOP(run_game_loop) {
         const u8 asteroids_num = 4;
         for (u8 i = 0; i < asteroids_num; ++i) {
             state->enemies[i].type = ASTEROID_LARGE;
-            const f32 angle_offset = -30.0f;
+            const f32 angle_offset = -45.0f;
             const f32 angle = (i * DEG_360 / asteroids_num);
             const f32 dist_from_centre = buffer->width / 4.0f;
             const f32 asteroid_vel_mag = 5.0f;

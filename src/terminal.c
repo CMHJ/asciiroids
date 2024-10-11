@@ -4,6 +4,8 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include "asciiroids.h"
+#include "constants.h"
 #include "types.h"
 
 static void terminal_set_settings(const bool enable) {

@@ -2,5 +2,11 @@
 #define ASCIIROIDS_CONSTANTS_H
 
 #define MAX_PATH 255
+#define PI 3.14159265358979323846f
+#define DEG_360 360.0f
+
+// player constants
+#define YAW_DEG_PER_SEC 180.0f
+#define BOOST_ACCELERATION 20.0f
 
 #endif  // ASCIIROIDS_CONSTANTS_H

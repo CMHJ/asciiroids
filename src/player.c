@@ -8,24 +8,24 @@ static void update_player_input(player_state* player, controller_state* controll
     // TODO(CMHJ): refactor boost code
     // handle boost
     if (controller->up) {
-        v2 vel_new = (v2){player->vel.x + BOOST_ACCELERATION * cosf(to_radians(player->yaw)) / FPS,
-                          player->vel.y + BOOST_ACCELERATION * sinf(to_radians(player->yaw)) / FPS};
+        v2 vel_new = (v2){player->phy.vel.x + BOOST_ACCELERATION * cosf(to_radians(player->phy.yaw)) / FPS,
+                          player->phy.vel.y + BOOST_ACCELERATION * sinf(to_radians(player->phy.yaw)) / FPS};
 
         const f32 vel_new_mag = v2_mag(vel_new);
         if (vel_new_mag <= MAX_VEL_MAG) {
-            player->vel = vel_new;
+            player->phy.vel = vel_new;
         } else {
-            player->vel.x -= BOOST_ACCELERATION * (player->vel.x / MAX_VEL_MAG) / FPS;
-            player->vel.y -= BOOST_ACCELERATION * (player->vel.y / MAX_VEL_MAG) / FPS;
-            const f32 vel_subbed_mag = v2_mag(player->vel);
+            player->phy.vel.x -= BOOST_ACCELERATION * (player->phy.vel.x / MAX_VEL_MAG) / FPS;
+            player->phy.vel.y -= BOOST_ACCELERATION * (player->phy.vel.y / MAX_VEL_MAG) / FPS;
+            const f32 vel_subbed_mag = v2_mag(player->phy.vel);
 
-            player->vel.x += BOOST_ACCELERATION * cosf(to_radians(player->yaw)) / FPS;
-            player->vel.y += BOOST_ACCELERATION * sinf(to_radians(player->yaw)) / FPS;
+            player->phy.vel.x += BOOST_ACCELERATION * cosf(to_radians(player->phy.yaw)) / FPS;
+            player->phy.vel.y += BOOST_ACCELERATION * sinf(to_radians(player->phy.yaw)) / FPS;
 
             // cap magnitude of velocity to handle float precision errors
-            while (v2_mag(player->vel) > MAX_VEL_MAG) {
-                player->vel.x -= 0.01f;
-                player->vel.y -= 0.01f;
+            while (v2_mag(player->phy.vel) > MAX_VEL_MAG) {
+                player->phy.vel.x -= 0.01f;
+                player->phy.vel.y -= 0.01f;
             }
         }
     }
@@ -33,17 +33,17 @@ static void update_player_input(player_state* player, controller_state* controll
     // handle turning
     static const f32 YAW_TICK = YAW_DEG_PER_SEC / FPS;
     if (controller->left && !controller->right) {
-        player->yaw += YAW_TICK;
+        player->phy.yaw += YAW_TICK;
 
         // clip yaw to [0, 360.0)
-        if (player->yaw >= DEG_360) {
-            player->yaw -= DEG_360;
+        if (player->phy.yaw >= DEG_360) {
+            player->phy.yaw -= DEG_360;
         }
     } else if (controller->right && !controller->left) {
-        player->yaw -= YAW_TICK;
+        player->phy.yaw -= YAW_TICK;
 
-        if (player->yaw < 0.0f) {
-            player->yaw += DEG_360;
+        if (player->phy.yaw < 0.0f) {
+            player->phy.yaw += DEG_360;
         }
     }
 
@@ -57,12 +57,12 @@ static void update_player_input(player_state* player, controller_state* controll
             for (u8 i = 0; i < MAX_BULLETS; ++i) {
                 if (player->bullets[i].life_frames == 0) {
                     player->bullets[i].life_frames = 60;
-                    player->bullets[i].pos = player->pos;
-                    player->bullets[i].yaw = player->yaw;
+                    player->bullets[i].phy.pos = player->phy.pos;
+                    player->bullets[i].phy.yaw = player->phy.yaw;
 
                     static const f32 bullet_speed = 20.0f;
-                    player->bullets[i].vel = (v2){bullet_speed * cosf(to_radians(player->bullets[i].yaw)),
-                                                  bullet_speed * sinf(to_radians(player->bullets[i].yaw))};
+                    player->bullets[i].phy.vel = (v2){bullet_speed * cosf(to_radians(player->bullets[i].phy.yaw)),
+                                                      bullet_speed * sinf(to_radians(player->bullets[i].phy.yaw))};
 
                     break;
                 }
@@ -79,19 +79,19 @@ static void update_player_pos(screen_buffer* buffer, player_state* player) {
     // this factor accounts for that to make the speed seem smooth
     static const f32 CHAR_SIZE_FACTOR = 2.5f;
 
-    player->pos.x += (player->vel.x * CHAR_SIZE_FACTOR) / FPS;
-    if (player->pos.x >= buffer->width) {
-        player->pos.x -= buffer->width;
+    player->phy.pos.x += (player->phy.vel.x * CHAR_SIZE_FACTOR) / FPS;
+    if (player->phy.pos.x >= buffer->width) {
+        player->phy.pos.x -= buffer->width;
 
-    } else if (player->pos.x < 0.0f) {
-        player->pos.x += buffer->width;
+    } else if (player->phy.pos.x < 0.0f) {
+        player->phy.pos.x += buffer->width;
     }
 
-    player->pos.y += player->vel.y / FPS;
-    if (player->pos.y >= buffer->height)
-        player->pos.y -= buffer->height;
-    else if (player->pos.y < 0.0f)
-        player->pos.y += buffer->height;
+    player->phy.pos.y += player->phy.vel.y / FPS;
+    if (player->phy.pos.y >= buffer->height)
+        player->phy.pos.y -= buffer->height;
+    else if (player->phy.pos.y < 0.0f)
+        player->phy.pos.y += buffer->height;
 }
 
 static void update_player_bullets(screen_buffer* buffer, player_state* player) {
@@ -109,25 +109,25 @@ static void update_player_bullets(screen_buffer* buffer, player_state* player) {
         // tick bullet life down each frame
         b->life_frames -= 1;
 
-        b->pos.x += (b->vel.x * CHAR_SIZE_FACTOR) / FPS;
-        if (b->pos.x >= buffer->width) {
-            b->pos.x -= buffer->width;
+        b->phy.pos.x += (b->phy.vel.x * CHAR_SIZE_FACTOR) / FPS;
+        if (b->phy.pos.x >= buffer->width) {
+            b->phy.pos.x -= buffer->width;
 
-        } else if (b->pos.x < 0.0f) {
-            b->pos.x += buffer->width;
+        } else if (b->phy.pos.x < 0.0f) {
+            b->phy.pos.x += buffer->width;
         }
 
-        b->pos.y += b->vel.y / FPS;
-        if (b->pos.y >= buffer->height)
-            b->pos.y -= buffer->height;
-        else if (b->pos.y < 0.0f)
-            b->pos.y += buffer->height;
+        b->phy.pos.y += b->phy.vel.y / FPS;
+        if (b->phy.pos.y >= buffer->height)
+            b->phy.pos.y -= buffer->height;
+        else if (b->phy.pos.y < 0.0f)
+            b->phy.pos.y += buffer->height;
     }
 }
 
 static void render_player_ship(screen_buffer* buffer, player_state* player) {
-    const usize x = (usize)player->pos.x;
-    const usize y = (buffer->height - 1) - (usize)player->pos.y;
+    const usize x = (usize)player->phy.pos.x;
+    const usize y = (buffer->height - 1) - (usize)player->phy.pos.y;
     const usize index = (y * buffer->width) + x;
 
     assert(index >= 0);
@@ -137,7 +137,7 @@ static void render_player_ship(screen_buffer* buffer, player_state* player) {
     const f32 deg_half_seg = deg_per_segment / 2.0f;
 
     // offset yaw by half seg to make math easier, so there's no discontinuity before 0
-    f32 yaw = player->yaw + deg_half_seg;
+    f32 yaw = player->phy.yaw + deg_half_seg;
     if (yaw >= DEG_360) {
         yaw -= DEG_360;
     }

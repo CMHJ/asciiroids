@@ -73,18 +73,20 @@ typedef struct controller_state {
     bool quit;
 } controller_state;
 
-typedef struct bullet {
+typedef struct physics {
     v2 pos;
     f32 yaw;
     v2 vel;
+} physics;
+
+typedef struct bullet {
+    physics phy;
     u16 life_frames;
 } bullet;
 
 #define MAX_BULLETS 4
 typedef struct player_state {
-    v2 pos;
-    f32 yaw;
-    v2 vel;
+    physics phy;
     bullet bullets[MAX_BULLETS];
     u16 shot_cooloff_frames;
 } player_state;
@@ -100,9 +102,7 @@ typedef enum enemy_type {
 
 typedef struct enemy_state {
     enemy_type type;
-    v2 pos;
-    f32 yaw;
-    v2 vel;
+    physics phy;
 } enemy_state;
 
 typedef enum game_mode { GAME_NEW, GAME_RUNNING, GAME_QUIT } game_mode;

@@ -18,12 +18,12 @@
 static void render_debug_overlay(screen_buffer* buffer, player_state* player, controller_state* controller) {
     wchar_t msg_buf[100] = {0};
 
-    swprintf(msg_buf, sizeof(msg_buf), L"Yaw: %.2f", player->yaw);
+    swprintf(msg_buf, sizeof(msg_buf), L"Yaw: %.2f", player->phy.yaw);
     print_xy(buffer, 0, 21, msg_buf, wcslen(msg_buf));
-    swprintf(msg_buf, sizeof(msg_buf), L"X: %.2f, Y: %.2f", player->pos.x, player->pos.y);
+    swprintf(msg_buf, sizeof(msg_buf), L"X: %.2f, Y: %.2f", player->phy.pos.x, player->phy.pos.y);
     print_xy(buffer, 0, 22, msg_buf, wcslen(msg_buf));
-    swprintf(msg_buf, sizeof(msg_buf), L"VelX: %.2f, VelY: %.2f Mag: %.2f", player->vel.x, player->vel.y,
-             v2_mag(player->vel));
+    swprintf(msg_buf, sizeof(msg_buf), L"VelX: %.2f, VelY: %.2f Mag: %.2f", player->phy.vel.x, player->phy.vel.y,
+             v2_mag(player->phy.vel));
     print_xy(buffer, 0, 23, msg_buf, wcslen(msg_buf));
 
     // visualise keyboard input
@@ -36,8 +36,8 @@ static void render_debug_overlay(screen_buffer* buffer, player_state* player, co
 static void render_bullets(screen_buffer* buffer, player_state* player) {
     for (u8 i = 0; i < MAX_BULLETS; ++i) {
         if (player->bullets[i].life_frames > 0) {
-            const usize x = (usize)player->bullets[i].pos.x;
-            const usize y = (buffer->height - 1) - (usize)player->bullets[i].pos.y;
+            const usize x = (usize)player->bullets[i].phy.pos.x;
+            const usize y = (buffer->height - 1) - (usize)player->bullets[i].phy.pos.y;
             const usize index = (y * buffer->width) + x;
             buffer->data[index] = U_BULLET;
         }
@@ -57,8 +57,8 @@ RUN_GAME_LOOP(run_game_loop) {
     if (state->mode == GAME_NEW) {
         state->mode = GAME_RUNNING;
 
-        player1->pos = (v2){buffer->width / 2.0f, buffer->height / 2.0f};
-        player1->yaw = 90.0f;
+        player1->phy.pos = (v2){buffer->width / 2.0f, buffer->height / 2.0f};
+        player1->phy.yaw = 90.0f;
 
         const u8 asteroids_num = 4;
         for (u8 i = 0; i < asteroids_num; ++i) {
@@ -67,11 +67,11 @@ RUN_GAME_LOOP(run_game_loop) {
             const f32 angle = (i * DEG_360 / asteroids_num);
             const f32 dist_from_centre = buffer->width / 4.0f;
             const f32 asteroid_vel_mag = 5.0f;
-            state->enemies[i].pos = (v2){dist_from_centre * cosf(to_radians(angle + angle_offset)),
-                                         dist_from_centre * sinf(to_radians(angle + angle_offset))};
-            state->enemies[i].vel = (v2){asteroid_vel_mag * cosf(to_radians(angle + angle_offset * i)),
-                                         asteroid_vel_mag * sinf(to_radians(angle + angle_offset * i))};
-            state->enemies[i].yaw = i * 150.0f;
+            state->enemies[i].phy.pos = (v2){dist_from_centre * cosf(to_radians(angle + angle_offset)),
+                                             dist_from_centre * sinf(to_radians(angle + angle_offset))};
+            state->enemies[i].phy.vel = (v2){asteroid_vel_mag * cosf(to_radians(angle + angle_offset * i)),
+                                             asteroid_vel_mag * sinf(to_radians(angle + angle_offset * i))};
+            state->enemies[i].phy.yaw = i * 150.0f;
         }
     }
 

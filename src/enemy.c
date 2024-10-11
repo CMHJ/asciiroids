@@ -14,19 +14,19 @@ static void update_enemies(screen_buffer* buffer, enemy_state* enemies) {
             continue;
         }
 
-        e->pos.x += (e->vel.x * CHAR_SIZE_FACTOR) / FPS;
-        if (e->pos.x >= buffer->width) {
-            e->pos.x -= buffer->width;
+        e->phy.pos.x += (e->phy.vel.x * CHAR_SIZE_FACTOR) / FPS;
+        if (e->phy.pos.x >= buffer->width) {
+            e->phy.pos.x -= buffer->width;
 
-        } else if (e->pos.x < 0.0f) {
-            e->pos.x += buffer->width;
+        } else if (e->phy.pos.x < 0.0f) {
+            e->phy.pos.x += buffer->width;
         }
 
-        e->pos.y += e->vel.y / FPS;
-        if (e->pos.y >= buffer->height)
-            e->pos.y -= buffer->height;
-        else if (e->pos.y < 0.0f)
-            e->pos.y += buffer->height;
+        e->phy.pos.y += e->phy.vel.y / FPS;
+        if (e->phy.pos.y >= buffer->height)
+            e->phy.pos.y -= buffer->height;
+        else if (e->phy.pos.y < 0.0f)
+            e->phy.pos.y += buffer->height;
     }
 }
 
@@ -44,7 +44,7 @@ static void render_enemies(screen_buffer* buffer, enemy_state* enemies) {
                 break;
             }
             case ASTEROID_LARGE: {
-                render_enemy_asteroid_large(buffer, enemies[i].pos);
+                render_enemy_asteroid_large(buffer, enemies[i].phy.pos);
                 break;
             }
             default: {

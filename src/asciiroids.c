@@ -85,4 +85,9 @@ RUN_GAME_LOOP(run_game_loop) {
 
     update_enemies(buffer, state->enemies);
     render_enemies(buffer, state->enemies);
+
+    for (u8 i = 0; i < buffer->width; i++) {
+        wchar_t c = L'0' + (i % 10);
+        printwc_xy(buffer, i, buffer->height - 4, c);
+    }
 }

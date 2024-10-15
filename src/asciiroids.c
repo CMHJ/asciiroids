@@ -86,6 +86,11 @@ static void update_position(screen_buffer* buffer, physics* phy) {
         phy->pos.y += buffer->height;
 }
 
+static bool asteroid_collision(v2 asteroid_pos, v2 object_pos, f32 asteroid_width, f32 asteroid_height) {
+    return (asteroid_pos.x <= object_pos.x && asteroid_pos.x + asteroid_width >= object_pos.x &&
+            asteroid_pos.y <= object_pos.y && asteroid_pos.y + asteroid_height >= object_pos.y);
+}
+
 static void update_enemies(screen_buffer* buffer, game_state* game) {
     for (u8 i = 0; i < MAX_ENEMIES; ++i) {
         enemy_state* e = &(game->enemies[i]);
@@ -113,8 +118,7 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                             continue;
                         }
 
-                        if (e->phy.pos.x <= b->phy.pos.x && e->phy.pos.x + ASTEROID_WIDTH >= b->phy.pos.x &&
-                            e->phy.pos.y <= b->phy.pos.y && e->phy.pos.y + ASTEROID_WIDTH >= b->phy.pos.y) {
+                        if (asteroid_collision(e->phy.pos, b->phy.pos, 4.0f, 2.0f)) {
                             b->life_frames = 0;
                             e->type = DEAD;
                         }

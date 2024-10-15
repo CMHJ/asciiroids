@@ -34,17 +34,10 @@ static void update_player_input(player_state* player, controller_state* controll
     static const f32 YAW_TICK = YAW_DEG_PER_SEC / FPS;
     if (controller->left && !controller->right) {
         player->phy.yaw += YAW_TICK;
-
-        // clip yaw to [0, 360.0)
-        if (player->phy.yaw >= DEG_360) {
-            player->phy.yaw -= DEG_360;
-        }
+        player->phy.yaw = degrees_clip(player->phy.yaw);
     } else if (controller->right && !controller->left) {
         player->phy.yaw -= YAW_TICK;
-
-        if (player->phy.yaw < 0.0f) {
-            player->phy.yaw += DEG_360;
-        }
+        player->phy.yaw = degrees_clip(player->phy.yaw);
     }
 
     // handle shooting

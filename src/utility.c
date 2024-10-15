@@ -13,3 +13,14 @@ static void buffer_clear(screen_buffer* buffer) {
         buffer->data[i] = NO_SHADE;
     }
 }
+
+static f32 degrees_clip(f32 angle) {
+    while (angle >= DEG_360) {
+        angle -= DEG_360;
+    }
+    while (angle < 0.0f) {
+        angle += DEG_360;
+    }
+
+    return angle;
+}

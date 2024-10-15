@@ -21,6 +21,7 @@ static void print_xy(screen_buffer* buffer, u32 x, u32 y, wchar_t* string, usize
     }
     assert(0 <= n);
 
+    y = (buffer->height - 1) - (usize)y;
     const usize index = (y * buffer->width) + x;
 
     // check write doesn't overrun end of buffer

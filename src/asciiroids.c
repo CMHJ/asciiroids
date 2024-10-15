@@ -86,14 +86,55 @@ static void update_position(screen_buffer* buffer, physics* phy) {
         phy->pos.y += buffer->height;
 }
 
-static void update_enemies(screen_buffer* buffer, enemy_state* enemies) {
+static void update_enemies(screen_buffer* buffer, game_state* game) {
     for (u8 i = 0; i < MAX_ENEMIES; ++i) {
-        enemy_state* e = &(enemies[i]);
+        enemy_state* e = &(game->enemies[i]);
         if (e->type == DEAD) {
             continue;
         }
 
         update_position(buffer, &e->phy);
+
+        switch (e->type) {
+            case ASTEROID_SMALL: {
+                break;
+            }
+            case ASTEROID_MEDIUM: {
+                break;
+            }
+            case ASTEROID_LARGE: {
+                static const f32 ASTEROID_WIDTH = 3.0f;
+
+                // check if any player's bullets have collided
+                for (u8 j = 0; j < PLAYERS; ++j) {
+                    for (u8 k = 0; k < MAX_BULLETS; ++k) {
+                        bullet* b = &game->players[j].bullets[k];
+                        if (b->life_frames == 0) {
+                            continue;
+                        }
+
+                        if (e->phy.pos.x <= b->phy.pos.x && e->phy.pos.x + ASTEROID_WIDTH >= b->phy.pos.x &&
+                            e->phy.pos.y <= b->phy.pos.y && e->phy.pos.y + ASTEROID_WIDTH >= b->phy.pos.y) {
+                            b->life_frames = 0;
+                            e->type = DEAD;
+                        }
+                    }
+                }
+
+                break;
+            }
+            case SAUCER_SMALL: {
+                break;
+            }
+            case SAUCER_LARGE: {
+                break;
+            }
+            case DEAD:
+            default: {
+                fprintf(stderr, "Error: unhandled case %d\n", (u32)e->type);
+                exit(1);
+            }
+        }
     }
 }
 
@@ -113,28 +154,28 @@ static void update_bullets(screen_buffer* buffer, bullet* bullets) {
 }
 
 RUN_GAME_LOOP(run_game_loop) {
-    controller_state* keyboard_controller_state = &state->controllers[0];
-    player_state* player1 = &state->players[0];
+    controller_state* keyboard_controller_state = &game->controllers[0];
+    player_state* player1 = &game->players[0];
 
     buffer_clear(buffer);
 
     if (keyboard_controller_state->quit) {
-        state->mode = GAME_QUIT;
+        game->mode = GAME_QUIT;
     }
 
-    if (state->mode == GAME_NEW) {
-        game_init(state, buffer);
+    if (game->mode == GAME_NEW) {
+        game_init(game, buffer);
     }
 
     update_player_input(player1, keyboard_controller_state);
 
     update_position(buffer, &player1->phy);
     update_bullets(buffer, player1->bullets);
-    update_enemies(buffer, state->enemies);
+    update_enemies(buffer, game);
 
     render_debug_overlay(buffer, player1, keyboard_controller_state);
     render_bullets(buffer, player1);
-    render_enemies(buffer, state->enemies);
+    render_enemies(buffer, game->enemies);
     render_player_ship(buffer, player1);
 
     for (u8 i = 0; i < buffer->width; i++) {

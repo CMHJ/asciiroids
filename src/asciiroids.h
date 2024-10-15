@@ -118,10 +118,10 @@ typedef struct game_state {
 } game_state;
 
 // define run_game_loop function type and default stub function
-#define RUN_GAME_LOOP(name) void name(game_state* state, screen_buffer* buffer)
+#define RUN_GAME_LOOP(name) void name(game_state* game, screen_buffer* buffer)
 typedef RUN_GAME_LOOP(run_game_loop_function_type);
 RUN_GAME_LOOP(run_game_loop_stub) {
-    (void)state;
+    (void)game;
     (void)buffer;
 }
 

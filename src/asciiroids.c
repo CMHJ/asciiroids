@@ -108,8 +108,6 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                 break;
             }
             case ASTEROID_LARGE: {
-                static const f32 ASTEROID_WIDTH = 3.0f;
-
                 // check if any player's bullets have collided
                 for (u8 j = 0; j < PLAYERS; ++j) {
                     for (u8 k = 0; k < MAX_BULLETS; ++k) {
@@ -120,7 +118,25 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
 
                         if (asteroid_collision(e->phy.pos, b->phy.pos, 4.0f, 2.0f)) {
                             b->life_frames = 0;
-                            e->type = DEAD;
+                            e->type = ASTEROID_MEDIUM;
+
+                            const f32 vel_mag = v2_mag(e->phy.vel);
+                            const f32 angle = deg_atan2(e->phy.vel.y, e->phy.vel.x);
+
+                            e->phy.vel.x = vel_mag * deg_cos(degrees_clip(angle + 90.0f));
+                            e->phy.vel.y = vel_mag * deg_sin(degrees_clip(angle + 90.0f));
+
+                            // look for a spot to stick the other spawned asteroid
+                            for (u8 l = 0; l < MAX_ENEMIES; ++l) {
+                                enemy_state* new_enemy = &(game->enemies[l]);
+                                if (new_enemy->type == DEAD) {
+                                    new_enemy->type = ASTEROID_MEDIUM;
+                                    new_enemy->phy = e->phy;
+                                    e->phy.vel.x = vel_mag * deg_cos(degrees_clip(angle - 90.0f));
+                                    e->phy.vel.y = vel_mag * deg_sin(degrees_clip(angle - 90.0f));
+                                    break;
+                                }
+                            }
                         }
                     }
                 }

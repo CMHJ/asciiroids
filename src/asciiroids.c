@@ -24,15 +24,13 @@ static void game_init(game_state* state, screen_buffer* buffer) {
     const u8 asteroids_num = 4;
     for (u8 i = 0; i < asteroids_num; ++i) {
         state->enemies[i].type = ASTEROID_LARGE;
-        const f32 angle_offset = -45.0f;
-        const f32 angle = degrees_clip(i * DEG_360 / asteroids_num);
+        const f32 pos_angle_from_origin = rand() % 360;
+        const f32 yaw = rand() % 360;
         const f32 dist_from_centre = buffer->width / 4.0f;
-        const f32 asteroid_vel_mag = 5.0f;
-        state->enemies[i].phy.pos = (v2){dist_from_centre * cosf(to_radians(angle + angle_offset)),
-                                         dist_from_centre * sinf(to_radians(angle + angle_offset))};
-        state->enemies[i].phy.vel = (v2){asteroid_vel_mag * cosf(to_radians(angle + angle_offset * i)),
-                                         asteroid_vel_mag * sinf(to_radians(angle + angle_offset * i))};
-        state->enemies[i].phy.yaw = i * 150.0f;
+        const f32 vel_mag = VEL_MAX_ASTEROID_LARGE * (rand() / (f32)RAND_MAX);
+        state->enemies[i].phy.pos = (v2){dist_from_centre * cosf(to_radians(pos_angle_from_origin)),
+                                         dist_from_centre * sinf(to_radians(pos_angle_from_origin))};
+        state->enemies[i].phy.vel = (v2){vel_mag * cosf(to_radians(yaw)), vel_mag * sinf(to_radians(yaw))};
     }
 }
 
@@ -91,6 +89,18 @@ static bool asteroid_collision(v2 asteroid_pos, v2 object_pos, f32 asteroid_widt
             asteroid_pos.y <= object_pos.y && asteroid_pos.y + asteroid_height >= object_pos.y);
 }
 
+static enemy_state* get_dead_enemy(game_state* game) {
+    for (u8 i = 0; i < MAX_ENEMIES; ++i) {
+        enemy_state* enemy = &(game->enemies[i]);
+        if (enemy->type == DEAD) {
+            return enemy;
+        }
+    }
+}
+
+static void enemy_asteroid_init(enemy_type type) {
+}
+
 static void update_enemies(screen_buffer* buffer, game_state* game) {
     for (u8 i = 0; i < MAX_ENEMIES; ++i) {
         enemy_state* e = &(game->enemies[i]);
@@ -120,23 +130,20 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                             b->life_frames = 0;
                             e->type = ASTEROID_MEDIUM;
 
-                            const f32 vel_mag = v2_mag(e->phy.vel);
-                            const f32 angle = deg_atan2(e->phy.vel.y, e->phy.vel.x);
-
-                            e->phy.vel.x = vel_mag * deg_cos(degrees_clip(angle + 90.0f));
-                            e->phy.vel.y = vel_mag * deg_sin(degrees_clip(angle + 90.0f));
+                            const f32 vel_mag = VEL_MAX_ASTEROID_MEDIUM * (rand() / (f32)RAND_MAX);
+                            const f32 yaw = get_random_angle();
+                            e->phy.vel.x = vel_mag * deg_cos(yaw);
+                            e->phy.vel.y = vel_mag * deg_sin(yaw);
 
                             // look for a spot to stick the other spawned asteroid
-                            for (u8 l = 0; l < MAX_ENEMIES; ++l) {
-                                enemy_state* new_enemy = &(game->enemies[l]);
-                                if (new_enemy->type == DEAD) {
-                                    new_enemy->type = ASTEROID_MEDIUM;
-                                    new_enemy->phy = e->phy;
-                                    e->phy.vel.x = vel_mag * deg_cos(degrees_clip(angle - 90.0f));
-                                    e->phy.vel.y = vel_mag * deg_sin(degrees_clip(angle - 90.0f));
-                                    break;
-                                }
-                            }
+                            enemy_state* new_enemy = get_dead_enemy(game);
+                            new_enemy->type = ASTEROID_MEDIUM;
+                            new_enemy->phy.pos = e->phy.pos;
+
+                            const f32 vel_mag_2 = VEL_MAX_ASTEROID_MEDIUM * (rand() / (f32)RAND_MAX);
+                            const f32 yaw_2 = get_random_angle();
+                            new_enemy->phy.vel.x = vel_mag_2 * deg_cos(yaw_2);
+                            new_enemy->phy.vel.y = vel_mag_2 * deg_sin(yaw_2);
                         }
                     }
                 }

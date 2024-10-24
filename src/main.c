@@ -118,6 +118,7 @@ i32 main(i32 argc, char** argv) {
     get_dir_path(game_lib_path, binary_path);
     string_concat(game_lib_path, "/libasciiroids.so");
 
+    srand(0);  // have the same seed each time
     setlocale(LC_CTYPE, "");
     terminal_setup();
     // TODO(CMHJ): add trap for Ctrl-C signal to do cleanup so that terminal settings are reset properly

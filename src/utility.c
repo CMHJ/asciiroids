@@ -1,11 +1,18 @@
 #include "utility.h"
 
+#include <stdlib.h>
+
 static inline f32 to_radians(const f32 degrees) {
     return degrees * (PI / 180.0f);
 }
 
 static inline f32 to_degrees(const f32 radians) {
     return radians * (180.0f / PI);
+}
+
+static inline f32 get_random_angle(void) {
+    // NOTE: this will only give integer values
+    return rand() % 360;
 }
 
 static inline f32 v2_mag(const v2 v) {

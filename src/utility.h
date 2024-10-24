@@ -7,6 +7,7 @@
 
 static inline f32 to_radians(const f32 degrees);
 static inline f32 to_degrees(const f32 radians);
+static inline f32 get_random_angle(void);
 static inline f32 v2_mag(const v2 v);
 static void buffer_clear(screen_buffer* buffer);
 static f32 degrees_clip(f32 angle);

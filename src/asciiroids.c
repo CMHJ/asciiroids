@@ -15,8 +15,20 @@
 #include "print.c"
 #include "utility.c"
 
+static void enemy_asteroid_init(enemy_state* e, enemy_type type, v2 pos) {
+    e->type = type;
+    e->phy.pos = pos;
+
+    const f32 vel_mag = ENEMY_MAX_VEL[type] * (rand() / (f32)RAND_MAX);
+    const f32 yaw = get_random_angle();
+    // using same position as asteroid being overwritten
+    e->phy.vel.x = vel_mag * deg_cos(yaw);
+    e->phy.vel.y = vel_mag * deg_sin(yaw);
+}
+
 static void game_init(game_state* state, screen_buffer* buffer) {
     state->mode = GAME_RUNNING;
+    state->enemies_shot = 0;
 
     state->players[0].phy.pos = (v2){buffer->width / 2.0f, buffer->height / 2.0f};
     state->players[0].phy.yaw = 90.0f;
@@ -25,12 +37,11 @@ static void game_init(game_state* state, screen_buffer* buffer) {
     for (u8 i = 0; i < asteroids_num; ++i) {
         state->enemies[i].type = ASTEROID_LARGE;
         const f32 pos_angle_from_origin = get_random_angle();
-        const f32 yaw = get_random_angle();
-        const f32 dist_from_centre = buffer->width / 4.0f;
-        const f32 vel_mag = VEL_MAX_ASTEROID_LARGE * (rand() / (f32)RAND_MAX);
-        state->enemies[i].phy.pos = (v2){dist_from_centre * cosf(to_radians(pos_angle_from_origin)),
-                                         dist_from_centre * sinf(to_radians(pos_angle_from_origin))};
-        state->enemies[i].phy.vel = (v2){vel_mag * cosf(to_radians(yaw)), vel_mag * sinf(to_radians(yaw))};
+        const f32 dist_from_centre = buffer->height / 2.0f;
+        const v2 pos =
+            (v2){dist_from_centre * deg_cos(pos_angle_from_origin), dist_from_centre * deg_sin(pos_angle_from_origin)};
+
+        enemy_asteroid_init(&state->enemies[i], ASTEROID_LARGE, pos);
     }
 }
 
@@ -84,7 +95,7 @@ static void update_position(screen_buffer* buffer, physics* phy) {
         phy->pos.y += buffer->height;
 }
 
-static bool asteroid_collision(v2 asteroid_pos, v2 object_pos, v2 asteroid_size) {
+static bool bullet_collision(v2 asteroid_pos, v2 object_pos, v2 asteroid_size) {
     return (asteroid_pos.x <= object_pos.x && asteroid_pos.x + asteroid_size.x >= object_pos.x &&
             asteroid_pos.y <= object_pos.y && asteroid_pos.y + asteroid_size.y >= object_pos.y);
 }
@@ -114,80 +125,52 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                     continue;
                 }
 
-                switch (e->type) {
-                    case DEAD: {
-                        // do nothing
-                        break;
-                    }
-                    case ASTEROID_SMALL: {
-                        if (asteroid_collision(e->phy.pos, b->phy.pos, ENEMY_SIZES[ASTEROID_SMALL])) {
-                            b->life_frames = 0;
+                if (bullet_collision(e->phy.pos, b->phy.pos, ENEMY_SIZE[e->type])) {
+                    // current enemy has been collided with, don't continue iterating
+                    j = PLAYERS;
+                    k = MAX_BULLETS;
+
+                    // remove bullet
+                    b->life_frames = 0;
+
+                    switch (e->type) {
+                        case ASTEROID_SMALL: {
                             e->type = DEAD;
+
+                            break;
                         }
-
-                        break;
-                    }
-                    case ASTEROID_MEDIUM: {
-                        if (asteroid_collision(e->phy.pos, b->phy.pos, ENEMY_SIZES[ASTEROID_MEDIUM])) {
-                            b->life_frames = 0;
-
+                        case ASTEROID_MEDIUM: {
                             // init first split asteroid
-                            e->type = ASTEROID_SMALL;
-
-                            const f32 vel_mag = VEL_MAX_ASTEROID_SMALL * (rand() / (f32)RAND_MAX);
-                            const f32 yaw = get_random_angle();
-                            // using same position as asteroid being overwritten
-                            e->phy.vel.x = vel_mag * deg_cos(yaw);
-                            e->phy.vel.y = vel_mag * deg_sin(yaw);
+                            enemy_asteroid_init(e, ASTEROID_SMALL, e->phy.pos);
 
                             // init second split asteroid
                             enemy_state* new_enemy = get_dead_enemy(game);
-                            new_enemy->type = ASTEROID_SMALL;
-                            new_enemy->phy.pos = e->phy.pos;
+                            enemy_asteroid_init(new_enemy, ASTEROID_SMALL, e->phy.pos);
 
-                            const f32 vel_mag_2 = VEL_MAX_ASTEROID_SMALL * (rand() / (f32)RAND_MAX);
-                            const f32 yaw_2 = get_random_angle();
-                            new_enemy->phy.vel.x = vel_mag_2 * deg_cos(yaw_2);
-                            new_enemy->phy.vel.y = vel_mag_2 * deg_sin(yaw_2);
+                            break;
                         }
-
-                        break;
-                    }
-                    case ASTEROID_LARGE: {
-                        if (asteroid_collision(e->phy.pos, b->phy.pos, ENEMY_SIZES[ASTEROID_LARGE])) {
-                            b->life_frames = 0;
-
+                        case ASTEROID_LARGE: {
                             // init first split asteroid
-                            e->type = ASTEROID_MEDIUM;
-
-                            const f32 vel_mag = VEL_MAX_ASTEROID_MEDIUM * (rand() / (f32)RAND_MAX);
-                            const f32 yaw = get_random_angle();
-                            e->phy.vel.x = vel_mag * deg_cos(yaw);
-                            e->phy.vel.y = vel_mag * deg_sin(yaw);
+                            enemy_asteroid_init(e, ASTEROID_MEDIUM, e->phy.pos);
 
                             // init second split asteroid
                             enemy_state* new_enemy = get_dead_enemy(game);
-                            new_enemy->type = ASTEROID_MEDIUM;
-                            new_enemy->phy.pos = e->phy.pos;
+                            enemy_asteroid_init(new_enemy, ASTEROID_MEDIUM, e->phy.pos);
 
-                            const f32 vel_mag_2 = VEL_MAX_ASTEROID_MEDIUM * (rand() / (f32)RAND_MAX);
-                            const f32 yaw_2 = get_random_angle();
-                            new_enemy->phy.vel.x = vel_mag_2 * deg_cos(yaw_2);
-                            new_enemy->phy.vel.y = vel_mag_2 * deg_sin(yaw_2);
+                            break;
                         }
 
-                        break;
-                    }
-
-                    case SAUCER_SMALL: {
-                        break;
-                    }
-                    case SAUCER_LARGE: {
-                        break;
-                    }
-                    default: {
-                        fprintf(stderr, "Error: unhandled case %d\n", (u32)e->type);
-                        exit(1);
+                        case SAUCER_SMALL: {
+                            break;
+                        }
+                        case SAUCER_LARGE: {
+                            break;
+                        }
+                        case DEAD:
+                        default: {
+                            fprintf(stderr, "Error: unhandled case %d\n", (u32)e->type);
+                            exit(1);
+                        }
                     }
                 }
             }

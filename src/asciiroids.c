@@ -21,7 +21,15 @@ static void enemy_asteroid_init(enemy_state* e, enemy_type type, v2 pos) {
 
     const f32 vel_mag = ENEMY_MAX_VEL[type] * (rand() / (f32)RAND_MAX);
     const f32 yaw = get_random_angle();
-    // using same position as asteroid being overwritten
+    e->phy.vel.x = vel_mag * deg_cos(yaw);
+    e->phy.vel.y = vel_mag * deg_sin(yaw);
+}
+
+static void enemy_saucer_init(screen_buffer* buffer, enemy_state* e) {
+    e->phy.pos = (v2){0.0f, buffer->height * (rand() / (f32)RAND_MAX)};
+
+    const f32 vel_mag = ENEMY_MAX_VEL[e->type];
+    const f32 yaw = get_random_angle();
     e->phy.vel.x = vel_mag * deg_cos(yaw);
     e->phy.vel.y = vel_mag * deg_sin(yaw);
 }
@@ -30,9 +38,11 @@ static void game_init(game_state* state, screen_buffer* buffer) {
     state->mode = GAME_RUNNING;
     state->enemies_shot = 0;
 
+    // init players
     state->players[0].phy.pos = (v2){buffer->width / 2.0f, buffer->height / 2.0f};
     state->players[0].phy.yaw = 90.0f;
 
+    // init starting asteroids
     const u8 asteroids_num = 4;
     for (u8 i = 0; i < asteroids_num; ++i) {
         state->enemies[i].type = ASTEROID_LARGE;
@@ -132,11 +142,11 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
 
                     // remove bullet
                     b->life_frames = 0;
+                    game->enemies_shot += 1;
 
                     switch (e->type) {
                         case ASTEROID_SMALL: {
                             e->type = DEAD;
-
                             break;
                         }
                         case ASTEROID_MEDIUM: {
@@ -161,9 +171,11 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                         }
 
                         case SAUCER_SMALL: {
+                            e->type = DEAD;
                             break;
                         }
                         case SAUCER_LARGE: {
+                            e->type = DEAD;
                             break;
                         }
                         case DEAD:
@@ -175,6 +187,22 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                 }
             }
         }
+    }
+
+    // spawn saucer if enough enemies have been shot
+    if (game->enemies_shot == 20) {
+        game->enemies_shot = 0;
+
+        enemy_state* e = get_dead_enemy(game);
+        e->type = SAUCER_LARGE;
+
+        game->enemies_saucers_spawned += 1;
+        if (game->enemies_saucers_spawned == 5) {
+            game->enemies_saucers_spawned = 0;
+            e->type = SAUCER_SMALL;
+        }
+
+        enemy_saucer_init(buffer, e);
     }
 }
 

@@ -122,6 +122,8 @@ typedef struct game_state {
     controller_state controllers[PLAYERS];
     player_state players[PLAYERS];
     enemy_state enemies[MAX_ENEMIES];
+    i8 enemies_shot;
+    i8 enemies_saucers_spawned;
 } game_state;
 
 // define run_game_loop function type and default stub function

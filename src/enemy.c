@@ -4,6 +4,15 @@
 #include "constants.h"
 #include "types.h"
 
+static void render_enemy_asteroid_small(screen_buffer* buffer, v2 pos) {
+    // check if in top or bottom half of the terminal char
+    if (fmodf(pos.y, 1.0f) < 0.5f) {
+        printwc_xy(buffer, pos.x, pos.y, BLOCK_LOWER_HALF);
+    } else {
+        printwc_xy(buffer, pos.x, pos.y, BLOCK_UPPER_HALF);
+    }
+}
+
 static void render_enemy_asteroid_medium(screen_buffer* buffer, v2 pos) {
     static wchar_t layer[2] = {BLOCK_FULL, BLOCK_FULL};
     print_xy(buffer, (usize)pos.x, (usize)pos.y, layer, 2);
@@ -20,6 +29,10 @@ static void render_enemies(screen_buffer* buffer, enemy_state* enemies) {
         switch (enemies[i].type) {
             case DEAD: {
                 // do nothing
+                break;
+            }
+            case ASTEROID_SMALL: {
+                render_enemy_asteroid_small(buffer, enemies[i].phy.pos);
                 break;
             }
             case ASTEROID_MEDIUM: {

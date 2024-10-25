@@ -112,9 +112,54 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
 
         switch (e->type) {
             case ASTEROID_SMALL: {
+                for (u8 j = 0; j < PLAYERS; ++j) {
+                    for (u8 k = 0; k < MAX_BULLETS; ++k) {
+                        bullet* b = &game->players[j].bullets[k];
+                        if (b->life_frames == 0) {
+                            continue;
+                        }
+
+                        if (asteroid_collision(e->phy.pos, b->phy.pos, 1.0f, 0.5f)) {
+                            b->life_frames = 0;
+                            e->type = DEAD;
+                        }
+                    }
+                }
+
                 break;
             }
             case ASTEROID_MEDIUM: {
+                for (u8 j = 0; j < PLAYERS; ++j) {
+                    for (u8 k = 0; k < MAX_BULLETS; ++k) {
+                        bullet* b = &game->players[j].bullets[k];
+                        if (b->life_frames == 0) {
+                            continue;
+                        }
+
+                        if (asteroid_collision(e->phy.pos, b->phy.pos, 2.0f, 1.0f)) {
+                            b->life_frames = 0;
+
+                            // init first split asteroid
+                            e->type = ASTEROID_SMALL;
+
+                            const f32 vel_mag = VEL_MAX_ASTEROID_SMALL * (rand() / (f32)RAND_MAX);
+                            const f32 yaw = get_random_angle();
+                            e->phy.vel.x = vel_mag * deg_cos(yaw);
+                            e->phy.vel.y = vel_mag * deg_sin(yaw);
+
+                            // init second split asteroid
+                            enemy_state* new_enemy = get_dead_enemy(game);
+                            new_enemy->type = ASTEROID_SMALL;
+                            new_enemy->phy.pos = e->phy.pos;
+
+                            const f32 vel_mag_2 = VEL_MAX_ASTEROID_SMALL * (rand() / (f32)RAND_MAX);
+                            const f32 yaw_2 = get_random_angle();
+                            new_enemy->phy.vel.x = vel_mag_2 * deg_cos(yaw_2);
+                            new_enemy->phy.vel.y = vel_mag_2 * deg_sin(yaw_2);
+                        }
+                    }
+                }
+
                 break;
             }
             case ASTEROID_LARGE: {
@@ -128,6 +173,8 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
 
                         if (asteroid_collision(e->phy.pos, b->phy.pos, 4.0f, 2.0f)) {
                             b->life_frames = 0;
+
+                            // init first split asteroid
                             e->type = ASTEROID_MEDIUM;
 
                             const f32 vel_mag = VEL_MAX_ASTEROID_MEDIUM * (rand() / (f32)RAND_MAX);
@@ -135,7 +182,7 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                             e->phy.vel.x = vel_mag * deg_cos(yaw);
                             e->phy.vel.y = vel_mag * deg_sin(yaw);
 
-                            // look for a spot to stick the other spawned asteroid
+                            // init second split asteroid
                             enemy_state* new_enemy = get_dead_enemy(game);
                             new_enemy->type = ASTEROID_MEDIUM;
                             new_enemy->phy.pos = e->phy.pos;

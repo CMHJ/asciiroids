@@ -115,7 +115,7 @@ const f32 ENEMY_MAX_VEL[TOTAL_ENEMY_TYPES] = {0.0f, 9.0f, 6.0f, 3.0f, 6.0f, 4.0f
 typedef enum game_mode { GAME_NEW, GAME_RUNNING, GAME_QUIT } game_mode;
 
 #define PLAYERS 1
-#define MAX_ENEMIES 20
+#define MAX_ENEMIES 100
 typedef struct game_state {
     game_mode mode;
     i8 controller_fds[PLAYERS];

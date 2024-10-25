@@ -110,7 +110,7 @@ const v2 ENEMY_SIZE[TOTAL_ENEMY_TYPES] = {
     {0.0f, 0.0f}, {1.0f, 0.5f}, {2.0f, 1.0f}, {4.0f, 2.0f}, {2.0f, 1.0f}, {4.0f, 1.0f},
 };
 
-const f32 ENEMY_MAX_VEL[TOTAL_ENEMY_TYPES] = {0.0f, 15.0f, 10.0f, 5.0f, 10.0f, 5.0f};
+const f32 ENEMY_MAX_VEL[TOTAL_ENEMY_TYPES] = {0.0f, 9.0f, 6.0f, 3.0f, 6.0f, 4.0f};
 
 typedef enum game_mode { GAME_NEW, GAME_RUNNING, GAME_QUIT } game_mode;
 

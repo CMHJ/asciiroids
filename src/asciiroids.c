@@ -84,9 +84,9 @@ static void update_position(screen_buffer* buffer, physics* phy) {
         phy->pos.y += buffer->height;
 }
 
-static bool asteroid_collision(v2 asteroid_pos, v2 object_pos, f32 asteroid_width, f32 asteroid_height) {
-    return (asteroid_pos.x <= object_pos.x && asteroid_pos.x + asteroid_width >= object_pos.x &&
-            asteroid_pos.y <= object_pos.y && asteroid_pos.y + asteroid_height >= object_pos.y);
+static bool asteroid_collision(v2 asteroid_pos, v2 object_pos, v2 asteroid_size) {
+    return (asteroid_pos.x <= object_pos.x && asteroid_pos.x + asteroid_size.x >= object_pos.x &&
+            asteroid_pos.y <= object_pos.y && asteroid_pos.y + asteroid_size.y >= object_pos.y);
 }
 
 static enemy_state* get_dead_enemy(game_state* game) {
@@ -98,9 +98,6 @@ static enemy_state* get_dead_enemy(game_state* game) {
     }
 }
 
-static void enemy_asteroid_init(enemy_type type) {
-}
-
 static void update_enemies(screen_buffer* buffer, game_state* game) {
     for (u8 i = 0; i < MAX_ENEMIES; ++i) {
         enemy_state* e = &(game->enemies[i]);
@@ -110,33 +107,28 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
 
         update_position(buffer, &e->phy);
 
-        switch (e->type) {
-            case ASTEROID_SMALL: {
-                for (u8 j = 0; j < PLAYERS; ++j) {
-                    for (u8 k = 0; k < MAX_BULLETS; ++k) {
-                        bullet* b = &game->players[j].bullets[k];
-                        if (b->life_frames == 0) {
-                            continue;
-                        }
+        for (u8 j = 0; j < PLAYERS; ++j) {
+            for (u8 k = 0; k < MAX_BULLETS; ++k) {
+                bullet* b = &game->players[j].bullets[k];
+                if (b->life_frames == 0) {
+                    continue;
+                }
 
-                        if (asteroid_collision(e->phy.pos, b->phy.pos, 1.0f, 0.5f)) {
+                switch (e->type) {
+                    case DEAD: {
+                        // do nothing
+                        break;
+                    }
+                    case ASTEROID_SMALL: {
+                        if (asteroid_collision(e->phy.pos, b->phy.pos, ENEMY_SIZES[ASTEROID_SMALL])) {
                             b->life_frames = 0;
                             e->type = DEAD;
                         }
+
+                        break;
                     }
-                }
-
-                break;
-            }
-            case ASTEROID_MEDIUM: {
-                for (u8 j = 0; j < PLAYERS; ++j) {
-                    for (u8 k = 0; k < MAX_BULLETS; ++k) {
-                        bullet* b = &game->players[j].bullets[k];
-                        if (b->life_frames == 0) {
-                            continue;
-                        }
-
-                        if (asteroid_collision(e->phy.pos, b->phy.pos, 2.0f, 1.0f)) {
+                    case ASTEROID_MEDIUM: {
+                        if (asteroid_collision(e->phy.pos, b->phy.pos, ENEMY_SIZES[ASTEROID_MEDIUM])) {
                             b->life_frames = 0;
 
                             // init first split asteroid
@@ -144,6 +136,7 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
 
                             const f32 vel_mag = VEL_MAX_ASTEROID_SMALL * (rand() / (f32)RAND_MAX);
                             const f32 yaw = get_random_angle();
+                            // using same position as asteroid being overwritten
                             e->phy.vel.x = vel_mag * deg_cos(yaw);
                             e->phy.vel.y = vel_mag * deg_sin(yaw);
 
@@ -157,21 +150,11 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                             new_enemy->phy.vel.x = vel_mag_2 * deg_cos(yaw_2);
                             new_enemy->phy.vel.y = vel_mag_2 * deg_sin(yaw_2);
                         }
+
+                        break;
                     }
-                }
-
-                break;
-            }
-            case ASTEROID_LARGE: {
-                // check if any player's bullets have collided
-                for (u8 j = 0; j < PLAYERS; ++j) {
-                    for (u8 k = 0; k < MAX_BULLETS; ++k) {
-                        bullet* b = &game->players[j].bullets[k];
-                        if (b->life_frames == 0) {
-                            continue;
-                        }
-
-                        if (asteroid_collision(e->phy.pos, b->phy.pos, 4.0f, 2.0f)) {
+                    case ASTEROID_LARGE: {
+                        if (asteroid_collision(e->phy.pos, b->phy.pos, ENEMY_SIZES[ASTEROID_LARGE])) {
                             b->life_frames = 0;
 
                             // init first split asteroid
@@ -192,21 +175,21 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                             new_enemy->phy.vel.x = vel_mag_2 * deg_cos(yaw_2);
                             new_enemy->phy.vel.y = vel_mag_2 * deg_sin(yaw_2);
                         }
+
+                        break;
+                    }
+
+                    case SAUCER_SMALL: {
+                        break;
+                    }
+                    case SAUCER_LARGE: {
+                        break;
+                    }
+                    default: {
+                        fprintf(stderr, "Error: unhandled case %d\n", (u32)e->type);
+                        exit(1);
                     }
                 }
-
-                break;
-            }
-            case SAUCER_SMALL: {
-                break;
-            }
-            case SAUCER_LARGE: {
-                break;
-            }
-            case DEAD:
-            default: {
-                fprintf(stderr, "Error: unhandled case %d\n", (u32)e->type);
-                exit(1);
             }
         }
     }

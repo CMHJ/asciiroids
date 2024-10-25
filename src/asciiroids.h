@@ -98,12 +98,17 @@ typedef enum enemy_type {
     ASTEROID_LARGE,
     SAUCER_SMALL,
     SAUCER_LARGE,
+    TOTAL_ENEMY_TYPES
 } enemy_type;
 
 typedef struct enemy_state {
     enemy_type type;
     physics phy;
 } enemy_state;
+
+const v2 ENEMY_SIZES[TOTAL_ENEMY_TYPES] = {
+    {0.0f, 0.0f}, {1.0f, 0.5f}, {2.0f, 1.0f}, {4.0f, 2.0f}, {2.0f, 1.0f}, {4.0f, 1.0f},
+};
 
 typedef enum game_mode { GAME_NEW, GAME_RUNNING, GAME_QUIT } game_mode;
 

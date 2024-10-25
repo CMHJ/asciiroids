@@ -24,8 +24,8 @@ static void game_init(game_state* state, screen_buffer* buffer) {
     const u8 asteroids_num = 4;
     for (u8 i = 0; i < asteroids_num; ++i) {
         state->enemies[i].type = ASTEROID_LARGE;
-        const f32 pos_angle_from_origin = rand() % 360;
-        const f32 yaw = rand() % 360;
+        const f32 pos_angle_from_origin = get_random_angle();
+        const f32 yaw = get_random_angle();
         const f32 dist_from_centre = buffer->width / 4.0f;
         const f32 vel_mag = VEL_MAX_ASTEROID_LARGE * (rand() / (f32)RAND_MAX);
         state->enemies[i].phy.pos = (v2){dist_from_centre * cosf(to_radians(pos_angle_from_origin)),

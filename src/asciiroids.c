@@ -26,12 +26,24 @@ static void enemy_asteroid_init(enemy_state* e, enemy_type type, v2 pos) {
 }
 
 static void enemy_saucer_init(screen_buffer* buffer, enemy_state* e) {
-    e->phy.pos = (v2){0.0f, buffer->height * (rand() / (f32)RAND_MAX)};
+    // randomly pick left or right
+    const bool going_right = rand() % 2;
+
+    // spawn saucer at random height at the edge of the screen
+    e->phy.pos = (v2){going_right ? 0.0f : buffer->width - 1, buffer->height * (rand() / (f32)RAND_MAX)};
+    e->direction_change_frames = 0;
+    e->shot_cooloff_frames = 0;
 
     const f32 vel_mag = ENEMY_MAX_VEL[e->type];
-    const f32 yaw = get_random_angle();
-    e->phy.vel.x = vel_mag * deg_cos(yaw);
-    e->phy.vel.y = vel_mag * deg_sin(yaw);
+    // pick a direction in a 90 degree cone centred on 0
+    e->phy.yaw = (rand() % 90) - 45;
+    // adjust angle for direction
+    if (going_right == false) e->phy.yaw += 180.0f;
+
+    e->phy.yaw = degrees_clip(e->phy.yaw);
+
+    e->phy.vel.x = vel_mag * deg_cos(e->phy.yaw);
+    e->phy.vel.y = vel_mag * deg_sin(e->phy.yaw);
 }
 
 static void game_init(game_state* state, screen_buffer* buffer) {
@@ -126,8 +138,43 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
             continue;
         }
 
+        // if saucer store last position
+        if (e->type == SAUCER_SMALL || e->type == SAUCER_LARGE) {
+            e->pos_last = e->phy.pos;
+        }
+
         update_position(buffer, &e->phy);
 
+        // update saucer behaviour
+        if (e->type == SAUCER_SMALL || e->type == SAUCER_LARGE) {
+            // check if at edge of screen and position has wrapped
+            const bool reached_end_going_left = (e->phy.vel.x < 0 && e->phy.pos.x > e->pos_last.x);
+            const bool reached_end_going_right = (e->phy.vel.x >= 0 && e->phy.pos.x < e->pos_last.x);
+            if (reached_end_going_left || reached_end_going_right) {
+                e->type = DEAD;
+            } else {
+                if (e->direction_change_frames <= 0) {
+                    e->direction_change_frames = 120;
+
+                    const f32 vel_mag = ENEMY_MAX_VEL[e->type];
+                    // pick a direction in a 90 degree cone centred on 0
+                    e->phy.yaw = (f32)(rand() % 90) - 45.0f;
+                    // adjust angle for direction
+                    if (e->phy.vel.x < 0.0f) e->phy.yaw += 180.0f;
+                    e->phy.yaw = degrees_clip(e->phy.yaw);
+
+                    e->phy.vel.x = vel_mag * deg_cos(e->phy.yaw);
+                    e->phy.vel.y = vel_mag * deg_sin(e->phy.yaw);
+                }
+
+                e->direction_change_frames -= 1;
+
+                // shoot towards closest player in random spread
+                // TODO
+            }
+        }
+
+        // check bullet collisions
         for (u8 j = 0; j < PLAYERS; ++j) {
             for (u8 k = 0; k < MAX_BULLETS; ++k) {
                 bullet* b = &game->players[j].bullets[k];

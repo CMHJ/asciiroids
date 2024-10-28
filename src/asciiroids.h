@@ -104,6 +104,11 @@ typedef enum enemy_type {
 typedef struct enemy_state {
     enemy_type type;
     physics phy;
+
+    // saucer specific data
+    v2 pos_last;
+    u16 direction_change_frames;
+    u16 shot_cooloff_frames;
 } enemy_state;
 
 const v2 ENEMY_SIZE[TOTAL_ENEMY_TYPES] = {

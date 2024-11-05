@@ -49,14 +49,11 @@ static void update_player_input(player_state* player, controller_state* controll
             // find a bullet slot that has expired
             for (u8 i = 0; i < MAX_BULLETS; ++i) {
                 if (player->bullets[i].life_frames == 0) {
-                    player->bullets[i].life_frames = 60;
+                    player->bullets[i].life_frames = BULLET_LIFE_FRAMES;
                     player->bullets[i].phy.pos = player->phy.pos;
                     player->bullets[i].phy.yaw = player->phy.yaw;
-
-                    // TODO: remove to_radians functions
-                    static const f32 bullet_speed = 20.0f;
-                    player->bullets[i].phy.vel = (v2){bullet_speed * cosf(to_radians(player->bullets[i].phy.yaw)),
-                                                      bullet_speed * sinf(to_radians(player->bullets[i].phy.yaw))};
+                    player->bullets[i].phy.vel = (v2){BULLET_SPEED * deg_cos(player->bullets[i].phy.yaw),
+                                                      BULLET_SPEED * deg_sin(player->bullets[i].phy.yaw)};
 
                     break;
                 }

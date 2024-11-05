@@ -188,10 +188,9 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
 
                 // shoot towards closest player in random spread
                 if (e->saucer_bullet.life_frames <= 0) {
-                    e->saucer_bullet.life_frames = 60;
+                    e->saucer_bullet.life_frames = BULLET_LIFE_FRAMES;
                     f32 min_mag = INFINITY;
                     v2 min_mag_vec = {0};
-                    player_state* min_mag_player = NULL;  // TODO: delete this
                     for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
                         player_state* player = &game->players[p_i];
                         v2 enemy_to_player_vec =
@@ -201,7 +200,6 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                         if (mag < min_mag) {
                             min_mag = mag;
                             min_mag_vec = enemy_to_player_vec;
-                            min_mag_player = player;
                         }
                     }
 
@@ -209,11 +207,8 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                     f32 bullet_yaw = deg_atan2(min_mag_vec.y, min_mag_vec.x / CHAR_SIZE_FACTOR);
                     bullet_yaw = degrees_clip(bullet_yaw);
                     e->saucer_bullet.phy.pos = e->phy.pos;
-                    static const f32 bullet_speed = 20.0f;
-
-                    // TODO: remove to_radians functions
                     e->saucer_bullet.phy.vel =
-                        (v2){bullet_speed * cosf(to_radians(bullet_yaw)), bullet_speed * sinf(to_radians(bullet_yaw))};
+                        (v2){BULLET_SPEED * deg_cos(bullet_yaw), BULLET_SPEED * deg_sin(bullet_yaw)};
                 }
 
                 e->saucer_bullet.life_frames -= 1;

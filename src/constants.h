@@ -9,6 +9,9 @@
 #define YAW_DEG_PER_SEC 180.0f
 #define BOOST_ACCELERATION 20.0f
 
+#define BULLET_SPEED 20.0f
+#define BULLET_LIFE_FRAMES 60
+
 // account for there being a difference in the height and width of characters.
 // because chars are taller than they are wide, moving north/south is much faster than east/west.
 // this factor accounts for that to make the speed seem smooth

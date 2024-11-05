@@ -67,27 +67,6 @@ static void update_player_input(player_state* player, controller_state* controll
     }
 }
 
-static void update_player_pos(screen_buffer* buffer, player_state* player) {
-    // account for there being a difference in the height and width of characters.
-    // because chars are taller than they are wide, moving north/south is much faster than east/west.
-    // this factor accounts for that to make the speed seem smooth
-    static const f32 CHAR_SIZE_FACTOR = 2.5f;
-
-    player->phy.pos.x += (player->phy.vel.x * CHAR_SIZE_FACTOR) / FPS;
-    if (player->phy.pos.x >= buffer->width) {
-        player->phy.pos.x -= buffer->width;
-
-    } else if (player->phy.pos.x < 0.0f) {
-        player->phy.pos.x += buffer->width;
-    }
-
-    player->phy.pos.y += player->phy.vel.y / FPS;
-    if (player->phy.pos.y >= buffer->height)
-        player->phy.pos.y -= buffer->height;
-    else if (player->phy.pos.y < 0.0f)
-        player->phy.pos.y += buffer->height;
-}
-
 static void render_player_ship(screen_buffer* buffer, player_state* player) {
     const usize x = (usize)player->phy.pos.x;
     const usize y = (buffer->height - 1) - (usize)player->phy.pos.y;

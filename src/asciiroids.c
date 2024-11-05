@@ -206,6 +206,13 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                     // spawn bullet
                     f32 bullet_yaw = deg_atan2(min_mag_vec.y, min_mag_vec.x / CHAR_SIZE_FACTOR);
                     bullet_yaw = degrees_clip(bullet_yaw);
+
+                    // add spread to shot
+                    static const f32 deg_spread = 30.0f;
+                    f32 spread = fmodf((f32)rand(), deg_spread * 10.0f) / 10.0f;  // get rand float to 0.1 precision
+                    spread = spread - deg_spread / 2.0f;                          // shift midpoint to 0.0
+                    bullet_yaw += spread;
+
                     e->saucer_bullet.phy.pos = e->phy.pos;
                     e->saucer_bullet.phy.vel =
                         (v2){BULLET_SPEED * deg_cos(bullet_yaw), BULLET_SPEED * deg_sin(bullet_yaw)};

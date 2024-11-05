@@ -53,6 +53,7 @@ static void update_player_input(player_state* player, controller_state* controll
                     player->bullets[i].phy.pos = player->phy.pos;
                     player->bullets[i].phy.yaw = player->phy.yaw;
 
+                    // TODO: remove to_radians functions
                     static const f32 bullet_speed = 20.0f;
                     player->bullets[i].phy.vel = (v2){bullet_speed * cosf(to_radians(player->bullets[i].phy.yaw)),
                                                       bullet_speed * sinf(to_radians(player->bullets[i].phy.yaw))};

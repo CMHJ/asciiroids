@@ -32,7 +32,7 @@ static void enemy_saucer_init(screen_buffer* buffer, enemy_state* e) {
     // spawn saucer at random height at the edge of the screen
     e->phy.pos = (v2){going_right ? 0.0f : buffer->width - 1, buffer->height * (rand() / (f32)RAND_MAX)};
     e->direction_change_frames = 0;
-    e->shot_cooloff_frames = 0;
+    e->saucer_bullet.life_frames = 0;
 
     const f32 vel_mag = ENEMY_MAX_VEL[e->type];
     // pick a direction in a 90 degree cone centred on 0
@@ -85,23 +85,40 @@ static void render_debug_overlay(screen_buffer* buffer, player_state* player, co
     buffer->data[buffer->size - 1] = controller->right ? DARK_SHADE : LIGHT_SHADE;
 }
 
-static void render_bullets(screen_buffer* buffer, player_state* player) {
-    for (u8 i = 0; i < MAX_BULLETS; ++i) {
-        if (player->bullets[i].life_frames > 0) {
+static void render_bullets(screen_buffer* buffer, game_state* game) {
+    for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
+        player_state* player = &game->players[p_i];
+
+        for (u8 i = 0; i < MAX_BULLETS; ++i) {
+            if (player->bullets[i].life_frames <= 0) {
+                continue;
+            }
+
             const usize x = (usize)player->bullets[i].phy.pos.x;
             const usize y = (buffer->height - 1) - (usize)player->bullets[i].phy.pos.y;
             const usize index = (y * buffer->width) + x;
             buffer->data[index] = U_BULLET;
         }
     }
+
+    for (u8 e_i = 0; e_i < MAX_ENEMIES; ++e_i) {
+        enemy_state* enemy = &game->enemies[e_i];
+        if (enemy->type != SAUCER_LARGE && enemy->type != SAUCER_SMALL) {
+            continue;
+        }
+
+        if (enemy->saucer_bullet.life_frames <= 0) {
+            continue;
+        }
+
+        const usize x = (usize)enemy->saucer_bullet.phy.pos.x;
+        const usize y = (buffer->height - 1) - (usize)enemy->saucer_bullet.phy.pos.y;
+        const usize index = (y * buffer->width) + x;
+        buffer->data[index] = U_BULLET;
+    }
 }
 
 static void update_position(screen_buffer* buffer, physics* phy) {
-    // account for there being a difference in the height and width of characters.
-    // because chars are taller than they are wide, moving north/south is much faster than east/west.
-    // this factor accounts for that to make the speed seem smooth
-    static const f32 CHAR_SIZE_FACTOR = 2.5f;
-
     phy->pos.x += (phy->vel.x * CHAR_SIZE_FACTOR) / FPS;
     if (phy->pos.x >= buffer->width) {
         phy->pos.x -= buffer->width;
@@ -133,7 +150,7 @@ static enemy_state* get_dead_enemy(game_state* game) {
 
 static void update_enemies(screen_buffer* buffer, game_state* game) {
     for (u8 i = 0; i < MAX_ENEMIES; ++i) {
-        enemy_state* e = &(game->enemies[i]);
+        enemy_state* e = &game->enemies[i];
         if (e->type == DEAD) {
             continue;
         }
@@ -170,6 +187,41 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                 e->direction_change_frames -= 1;
 
                 // shoot towards closest player in random spread
+                if (e->saucer_bullet.life_frames <= 0) {
+                    e->saucer_bullet.life_frames = 60;
+                    f32 min_mag = INFINITY;
+                    v2 min_mag_vec = {0};
+                    player_state* min_mag_player = NULL;  // TODO: delete this
+                    for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
+                        player_state* player = &game->players[p_i];
+                        v2 enemy_to_player_vec =
+                            (v2){player->phy.pos.x - e->phy.pos.x, player->phy.pos.y - e->phy.pos.y};
+
+                        f32 mag = v2_mag(enemy_to_player_vec);
+                        if (mag < min_mag) {
+                            min_mag = mag;
+                            min_mag_vec = enemy_to_player_vec;
+                            min_mag_player = player;
+                        }
+                    }
+
+                    // spawn bullet
+                    f32 bullet_yaw = deg_atan2(min_mag_vec.y, min_mag_vec.x / CHAR_SIZE_FACTOR);
+                    bullet_yaw = degrees_clip(bullet_yaw);
+                    e->saucer_bullet.phy.pos = e->phy.pos;
+                    static const f32 bullet_speed = 20.0f;
+
+                    // TODO: remove to_radians functions
+                    e->saucer_bullet.phy.vel =
+                        (v2){bullet_speed * cosf(to_radians(bullet_yaw)), bullet_speed * sinf(to_radians(bullet_yaw))};
+                }
+
+                e->saucer_bullet.life_frames -= 1;
+
+                // update bullet position
+                update_position(buffer, &e->saucer_bullet.phy);
+
+                // check saucer bullet for collisions
                 // TODO
             }
         }
@@ -289,8 +341,8 @@ RUN_GAME_LOOP(run_game_loop) {
     update_enemies(buffer, game);
 
     render_debug_overlay(buffer, player1, keyboard_controller_state);
-    render_bullets(buffer, player1);
     render_enemies(buffer, game->enemies);
+    render_bullets(buffer, game);
     render_player_ship(buffer, player1);
 
     for (u8 i = 0; i < buffer->width; i++) {

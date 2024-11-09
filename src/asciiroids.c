@@ -15,6 +15,11 @@
 #include "print.c"
 #include "utility.c"
 
+static void player_kill(player_state* player) {
+    player->alive = false;
+    player->respawn_frames = 60;
+}
+
 static void enemy_asteroid_init(enemy_state* e, enemy_type type, v2 pos) {
     e->type = type;
     e->phy.pos = pos;
@@ -51,6 +56,8 @@ static void game_init(game_state* state, screen_buffer* buffer) {
     state->enemies_shot = 0;
 
     // init players
+    state->players[0].alive = true;
+    state->players[0].lives = 4;
     state->players[0].phy.pos = (v2){buffer->width / 2.0f, buffer->height / 2.0f};
     state->players[0].phy.yaw = 90.0f;
 
@@ -134,9 +141,9 @@ static void update_position(screen_buffer* buffer, physics* phy) {
         phy->pos.y += buffer->height;
 }
 
-static bool bullet_collision(v2 asteroid_pos, v2 object_pos, v2 asteroid_size) {
-    return (asteroid_pos.x <= object_pos.x && asteroid_pos.x + asteroid_size.x >= object_pos.x &&
-            asteroid_pos.y <= object_pos.y && asteroid_pos.y + asteroid_size.y >= object_pos.y);
+static bool bullet_collision(v2 target_pos, v2 target_size, v2 bullet_pos) {
+    return (target_pos.x <= bullet_pos.x && target_pos.x + target_size.x >= bullet_pos.x &&
+            target_pos.y <= bullet_pos.y && target_pos.y + target_size.y >= bullet_pos.y);
 }
 
 static enemy_state* get_dead_enemy(game_state* game) {
@@ -188,11 +195,16 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
 
                 // shoot towards closest player in random spread
                 if (e->saucer_bullet.life_frames <= 0) {
-                    e->saucer_bullet.life_frames = BULLET_LIFE_FRAMES;
                     f32 min_mag = INFINITY;
                     v2 min_mag_vec = {0};
+                    bool player_alive = false;
                     for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
                         player_state* player = &game->players[p_i];
+                        if (player->alive == false) {
+                            continue;
+                        }
+
+                        player_alive = true;
                         v2 enemy_to_player_vec =
                             (v2){player->phy.pos.x - e->phy.pos.x, player->phy.pos.y - e->phy.pos.y};
 
@@ -203,7 +215,9 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                         }
                     }
 
+                    if (player_alive) {
                     // spawn bullet
+                        e->saucer_bullet.life_frames = BULLET_LIFE_FRAMES;
                     f32 bullet_yaw = deg_atan2(min_mag_vec.y, min_mag_vec.x / CHAR_SIZE_FACTOR);
                     bullet_yaw = degrees_clip(bullet_yaw);
 
@@ -217,14 +231,21 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                     e->saucer_bullet.phy.vel =
                         (v2){BULLET_SPEED * deg_cos(bullet_yaw), BULLET_SPEED * deg_sin(bullet_yaw)};
                 }
-
+                } else {
                 e->saucer_bullet.life_frames -= 1;
+                }
 
                 // update bullet position
                 update_position(buffer, &e->saucer_bullet.phy);
 
                 // check saucer bullet for collisions
-                // TODO
+                for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
+                    player_state* p = &game->players[p_i];
+                    if (bullet_collision(p->phy.pos, (v2){1.0f, 1.0f}, e->saucer_bullet.phy.pos)) {
+                        e->saucer_bullet.life_frames = 0;
+                        player_kill(p);
+                    }
+                }
             }
         }
 
@@ -236,7 +257,7 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                     continue;
                 }
 
-                if (bullet_collision(e->phy.pos, b->phy.pos, ENEMY_SIZE[e->type])) {
+                if (bullet_collision(e->phy.pos, ENEMY_SIZE[e->type], b->phy.pos)) {
                     // current enemy has been collided with, don't continue iterating
                     j = PLAYERS;
                     k = MAX_BULLETS;
@@ -336,7 +357,7 @@ RUN_GAME_LOOP(run_game_loop) {
         game_init(game, buffer);
     }
 
-    update_player_input(player1, keyboard_controller_state);
+    update_player(player1, keyboard_controller_state, buffer);
 
     update_position(buffer, &player1->phy);
     update_bullets(buffer, player1->bullets);
@@ -345,7 +366,7 @@ RUN_GAME_LOOP(run_game_loop) {
     render_debug_overlay(buffer, player1, keyboard_controller_state);
     render_enemies(buffer, game->enemies);
     render_bullets(buffer, game);
-    render_player_ship(buffer, player1);
+    render_player(buffer, player1);
 
     for (u8 i = 0; i < buffer->width; i++) {
         wchar_t c = L'0' + (i % 10);

@@ -2,11 +2,31 @@
 #include "constants.h"
 #include "types.h"
 
-static void update_player_input(player_state* player, controller_state* controller) {
+static void update_player(player_state* player, controller_state* controller, screen_buffer* buffer) {
     static const f32 MAX_VEL_MAG = 20.0f;
 
-    // TODO(CMHJ): refactor boost code
+    // check if player is currently respawning
+    if (player->respawn_frames > 0) {
+        player->respawn_frames -= 1;
+
+        // respawn player
+        if (player->respawn_frames <= 0 && player->lives > 0) {
+            player->alive = true;
+            player->lives -= 1;
+            player->shot_cooloff_frames = 0;
+            player->phy.pos = (v2){buffer->width / 2, buffer->height / 2};
+            player->phy.vel = (v2){0.0f, 0.0f};
+            player->phy.yaw = 90.0f;
+        }
+    }
+
+    if (player->alive == false) {
+        return;
+    }
+
     // handle boost
+    // if boost reaches max velocity start biasing velocity in the player's current direction this will prevent the
+    // player not being able to move in the desired direction when max velocity is reached.
     if (controller->up) {
         v2 vel_new = (v2){player->phy.vel.x + BOOST_ACCELERATION * cosf(to_radians(player->phy.yaw)) / FPS,
                           player->phy.vel.y + BOOST_ACCELERATION * sinf(to_radians(player->phy.yaw)) / FPS};
@@ -15,10 +35,12 @@ static void update_player_input(player_state* player, controller_state* controll
         if (vel_new_mag <= MAX_VEL_MAG) {
             player->phy.vel = vel_new;
         } else {
+            // remove velocity from where the player is currently moving
             player->phy.vel.x -= BOOST_ACCELERATION * (player->phy.vel.x / MAX_VEL_MAG) / FPS;
             player->phy.vel.y -= BOOST_ACCELERATION * (player->phy.vel.y / MAX_VEL_MAG) / FPS;
             const f32 vel_subbed_mag = v2_mag(player->phy.vel);
 
+            // add velocity to where the player wants to go
             player->phy.vel.x += BOOST_ACCELERATION * cosf(to_radians(player->phy.yaw)) / FPS;
             player->phy.vel.y += BOOST_ACCELERATION * sinf(to_radians(player->phy.yaw)) / FPS;
 
@@ -64,7 +86,14 @@ static void update_player_input(player_state* player, controller_state* controll
     }
 }
 
-static void render_player_ship(screen_buffer* buffer, player_state* player) {
+static void render_player(screen_buffer* buffer, player_state* player) {
+    if (player->alive == false) {
+        return;
+    }
+    if (player->respawn_frames > 0) {
+        return;
+    }
+
     const usize x = (usize)player->phy.pos.x;
     const usize y = (buffer->height - 1) - (usize)player->phy.pos.y;
     const usize index = (y * buffer->width) + x;

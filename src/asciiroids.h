@@ -88,7 +88,10 @@ typedef struct bullet {
 typedef struct player_state {
     physics phy;
     bullet bullets[MAX_BULLETS];
+    bool alive;
+    u8 lives;
     u16 shot_cooloff_frames;
+    u16 respawn_frames;
 } player_state;
 
 typedef enum enemy_type {

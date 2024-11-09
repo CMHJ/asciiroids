@@ -15,6 +15,31 @@
 #include "print.c"
 #include "utility.c"
 
+static void render_ui(screen_buffer* buffer, game_state* game) {
+    for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
+        player_state* player = &game->players[p_i];
+
+        static const usize margin = 2;
+        const usize spacing = (buffer->width - 2 * margin) / 4;
+        const usize x_offset = margin + (p_i + 1) * spacing;
+
+        // TODO: draw level counter
+
+        // draw score
+        for (u32 score = player->score, c_i = 0; score > 0; score /= 10, ++c_i) {
+            u32 score_num = score % 10;
+            wchar_t score_num_char = NUMBERS[score_num];
+
+            printwc_xy(buffer, x_offset - c_i, buffer->height - 2, score_num_char);
+        }
+
+        // draw lives
+        for (u8 life = 0; life < player->lives; ++life) {
+            printwc_xy(buffer, x_offset - life, buffer->height - 3, U_SHIP_N);
+        }
+    }
+}
+
 static void player_kill(player_state* player) {
     player->alive = false;
     player->respawn_frames = 60;
@@ -60,6 +85,7 @@ static void game_init(game_state* state, screen_buffer* buffer) {
     state->players[0].lives = 4;
     state->players[0].phy.pos = (v2){buffer->width / 2.0f, buffer->height / 2.0f};
     state->players[0].phy.yaw = 90.0f;
+    state->players[0].score = 12345678;
 
     // init starting asteroids
     const u8 asteroids_num = 4;
@@ -222,23 +248,23 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                     }
 
                     if (player_alive) {
-                    // spawn bullet
+                        // spawn bullet
                         e->saucer_bullet.life_frames = BULLET_LIFE_FRAMES;
-                    f32 bullet_yaw = deg_atan2(min_mag_vec.y, min_mag_vec.x / CHAR_SIZE_FACTOR);
-                    bullet_yaw = degrees_clip(bullet_yaw);
+                        f32 bullet_yaw = deg_atan2(min_mag_vec.y, min_mag_vec.x / CHAR_SIZE_FACTOR);
+                        bullet_yaw = degrees_clip(bullet_yaw);
 
-                    // add spread to shot
-                    static const f32 deg_spread = 30.0f;
-                    f32 spread = fmodf((f32)rand(), deg_spread * 10.0f) / 10.0f;  // get rand float to 0.1 precision
-                    spread = spread - deg_spread / 2.0f;                          // shift midpoint to 0.0
-                    bullet_yaw += spread;
+                        // add spread to shot
+                        static const f32 deg_spread = 30.0f;
+                        f32 spread = fmodf((f32)rand(), deg_spread * 10.0f) / 10.0f;  // get rand float to 0.1 precision
+                        spread = spread - deg_spread / 2.0f;                          // shift midpoint to 0.0
+                        bullet_yaw += spread;
 
-                    e->saucer_bullet.phy.pos = e->phy.pos;
-                    e->saucer_bullet.phy.vel =
-                        (v2){BULLET_SPEED * deg_cos(bullet_yaw), BULLET_SPEED * deg_sin(bullet_yaw)};
-                }
+                        e->saucer_bullet.phy.pos = e->phy.pos;
+                        e->saucer_bullet.phy.vel =
+                            (v2){BULLET_SPEED * deg_cos(bullet_yaw), BULLET_SPEED * deg_sin(bullet_yaw)};
+                    }
                 } else {
-                e->saucer_bullet.life_frames -= 1;
+                    e->saucer_bullet.life_frames -= 1;
                 }
 
                 // update bullet position
@@ -370,6 +396,7 @@ RUN_GAME_LOOP(run_game_loop) {
     update_enemies(buffer, game);
 
     render_debug_overlay(buffer, player1, keyboard_controller_state);
+    render_ui(buffer, game);
     render_enemies(buffer, game->enemies);
     render_bullets(buffer, game);
     render_player(buffer, player1);

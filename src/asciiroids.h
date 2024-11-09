@@ -92,6 +92,7 @@ typedef struct player_state {
     u8 lives;
     u16 shot_cooloff_frames;
     u16 respawn_frames;
+    u32 score;
 } player_state;
 
 typedef enum enemy_type {

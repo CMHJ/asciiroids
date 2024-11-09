@@ -149,6 +149,7 @@ static i8 keyboard_detect(void) {
             }
         }
 
+        // TODO: change to nanosleep
         // limit polling to a reasonable rate
         usleep(1);
     }

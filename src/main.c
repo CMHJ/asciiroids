@@ -1,3 +1,5 @@
+#define _POSIX_C_SOURCE 199309L  // clock_gettime, nanosleep
+
 #include <dlfcn.h>
 #include <locale.h>
 #include <stdio.h>
@@ -35,6 +37,31 @@ static void game_state_deinit(game_state* state) {
     for (u8 player = 0; player < PLAYERS; ++player) {
         close(state->controller_fds[player]);
     }
+}
+
+static u64 get_timestamp_ns(void) {
+    struct timespec ts;
+    if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+        perror("clock_gettime");
+        exit(1);
+    }
+
+    u64 secs_in_nsecs = ts.tv_sec * 1000 * 1000 * 1000;
+    u64 result = secs_in_nsecs + (u64)ts.tv_nsec;
+    return result;
+}
+
+static void sleep_ns(u64 ns) {
+    struct timespec duration;
+    duration.tv_nsec = ns % (1000 * 1000 * 1000);
+    duration.tv_sec = ns / (1000 * 1000 * 1000);
+
+    if (nanosleep(&duration, NULL) == -1) {
+        perror("nanosleep");
+        exit(1);
+    }
+
+    return;
 }
 
 static void get_dir_path(char* buf, char* binary_path) {
@@ -140,7 +167,13 @@ i32 main(i32 argc, char** argv) {
     code.run_game_loop = run_game_loop_stub;
     game_code_load(&code, game_lib_path);
 
+    u64 ts_frame_start = 0;
+    u64 ts_cycle_start = 0;
+    u64 ts_frame_elapsed = 0;
+    u64 ts_cycle_elapsed = 0;
     while (state.mode != GAME_QUIT) {
+        ts_frame_start = get_timestamp_ns();
+
         if (file_has_changed(game_lib_path, &game_lib_last_modify_time)) {
             game_code_unload(&code);
             game_code_load(&code, game_lib_path);
@@ -150,11 +183,24 @@ i32 main(i32 argc, char** argv) {
 
         code.run_game_loop(&state, &buffer);
 
+        // TODO: timing is still slightly off in cycle ms, investigate
+        u64 ts_end = get_timestamp_ns();
+        ts_frame_elapsed = ts_end - ts_frame_start;
+        ts_cycle_elapsed = ts_end - ts_cycle_start;
+
+        swprintf(buffer.data, buffer.size, L"frame: %f ms, cycle: %f ms", (f32)ts_frame_elapsed / 1e6,
+                 (f32)ts_cycle_elapsed / 1e6);
+
+        ts_cycle_start = get_timestamp_ns();
+
         buffer_render(&buffer);
 
-        // TODO(CMHJ): calculate elapsed time in cycle and enforce true 60 FPS
-        static const u32 microseconds_in_second = 1000000;
-        usleep(microseconds_in_second / FPS);
+        static const f32 nanoseconds_in_second = 1000 * 1000 * 1000;
+        const f32 time_in_frame = nanoseconds_in_second / FPS;
+        const f32 remaining_time_in_frame = time_in_frame - ts_frame_elapsed;
+        if (remaining_time_in_frame > 0) {
+            sleep_ns(remaining_time_in_frame);
+        }
     }
 
     game_code_unload(&code);

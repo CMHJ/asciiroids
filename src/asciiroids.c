@@ -77,13 +77,19 @@ static void game_init(game_state* state, screen_buffer* buffer) {
 static void render_debug_overlay(screen_buffer* buffer, player_state* player, controller_state* controller) {
     wchar_t msg_buf[100] = {0};
 
+    // render debug numbers
+    for (u8 i = 0; i < buffer->width; i++) {
+        wchar_t c = L'0' + (i % 10);
+        printwc_xy(buffer, i, 3, c);
+    }
+
     swprintf(msg_buf, sizeof(msg_buf), L"Yaw: %.2f", player->phy.yaw);
-    print_xy(buffer, 0, 21, msg_buf, wcslen(msg_buf));
+    print_xy(buffer, 0, 2, msg_buf, wcslen(msg_buf));
     swprintf(msg_buf, sizeof(msg_buf), L"X: %.2f, Y: %.2f", player->phy.pos.x, player->phy.pos.y);
-    print_xy(buffer, 0, 22, msg_buf, wcslen(msg_buf));
+    print_xy(buffer, 0, 1, msg_buf, wcslen(msg_buf));
     swprintf(msg_buf, sizeof(msg_buf), L"VelX: %.2f, VelY: %.2f Mag: %.2f", player->phy.vel.x, player->phy.vel.y,
              v2_mag(player->phy.vel));
-    print_xy(buffer, 0, 23, msg_buf, wcslen(msg_buf));
+    print_xy(buffer, 0, 0, msg_buf, wcslen(msg_buf));
 
     // visualise keyboard input
     buffer->data[buffer->size - 4] = controller->shoot ? DARK_SHADE : LIGHT_SHADE;
@@ -367,9 +373,4 @@ RUN_GAME_LOOP(run_game_loop) {
     render_enemies(buffer, game->enemies);
     render_bullets(buffer, game);
     render_player(buffer, player1);
-
-    for (u8 i = 0; i < buffer->width; i++) {
-        wchar_t c = L'0' + (i % 10);
-        printwc_xy(buffer, i, buffer->height - 4, c);
-    }
 }

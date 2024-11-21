@@ -187,6 +187,71 @@ static enemy_state* get_dead_enemy(game_state* game) {
     }
 }
 
+static bool player_collision(v2 player_pos, v2 player_size, v2 enemy_pos, v2 enemy_size) {
+    f32 p_top = player_pos.y + player_size.y;
+    f32 p_bottom = player_pos.y;
+    f32 p_left = player_pos.x;
+    f32 p_right = player_pos.x + player_size.x;
+
+    f32 e_top = enemy_pos.y + enemy_size.y;
+    f32 e_bottom = enemy_pos.y;
+    f32 e_left = enemy_pos.x;
+    f32 e_right = enemy_pos.x + enemy_size.x;
+
+    if (p_right < e_left || e_right < p_left) {
+        return false;
+    }
+
+    if (p_top < e_bottom || e_top < p_bottom) {
+        return false;
+    }
+
+    return true;
+}
+
+static void enemy_kill(game_state* game, enemy_state* e) {
+    switch (e->type) {
+        case ASTEROID_SMALL: {
+            e->type = DEAD;
+            break;
+        }
+        case ASTEROID_MEDIUM: {
+            // init first split asteroid
+            enemy_asteroid_init(e, ASTEROID_SMALL, e->phy.pos);
+
+            // init second split asteroid
+            enemy_state* new_enemy = get_dead_enemy(game);
+            enemy_asteroid_init(new_enemy, ASTEROID_SMALL, e->phy.pos);
+
+            break;
+        }
+        case ASTEROID_LARGE: {
+            // init first split asteroid
+            enemy_asteroid_init(e, ASTEROID_MEDIUM, e->phy.pos);
+
+            // init second split asteroid
+            enemy_state* new_enemy = get_dead_enemy(game);
+            enemy_asteroid_init(new_enemy, ASTEROID_MEDIUM, e->phy.pos);
+
+            break;
+        }
+
+        case SAUCER_SMALL: {
+            e->type = DEAD;
+            break;
+        }
+        case SAUCER_LARGE: {
+            e->type = DEAD;
+            break;
+        }
+        case DEAD:
+        default: {
+            fprintf(stderr, "Error: unhandled case %d\n", (u32)e->type);
+            exit(1);
+        }
+    }
+}
+
 static void update_enemies(screen_buffer* buffer, game_state* game) {
     for (u8 i = 0; i < MAX_ENEMIES; ++i) {
         enemy_state* e = &game->enemies[i];
@@ -200,6 +265,19 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
         }
 
         update_position(buffer, &e->phy);
+
+        // check for collision with player
+        for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
+            player_state* p = &game->players[p_i];
+            if (p->alive == false) {
+                continue;
+            }
+
+            if (player_collision(p->phy.pos, PLAYER_SIZE, e->phy.pos, ENEMY_SIZE[e->type])) {
+                player_kill(p);
+                enemy_kill(game, e);
+            }
+        }
 
         // update saucer behaviour
         if (e->type == SAUCER_SMALL || e->type == SAUCER_LARGE) {
@@ -273,7 +351,7 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                 // check saucer bullet for collisions
                 for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
                     player_state* p = &game->players[p_i];
-                    if (bullet_collision(p->phy.pos, (v2){1.0f, 1.0f}, e->saucer_bullet.phy.pos)) {
+                    if (bullet_collision(p->phy.pos, PLAYER_SIZE, e->saucer_bullet.phy.pos)) {
                         e->saucer_bullet.life_frames = 0;
                         player_kill(p);
                     }
@@ -298,46 +376,7 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                     b->life_frames = 0;
                     game->enemies_shot += 1;
 
-                    switch (e->type) {
-                        case ASTEROID_SMALL: {
-                            e->type = DEAD;
-                            break;
-                        }
-                        case ASTEROID_MEDIUM: {
-                            // init first split asteroid
-                            enemy_asteroid_init(e, ASTEROID_SMALL, e->phy.pos);
-
-                            // init second split asteroid
-                            enemy_state* new_enemy = get_dead_enemy(game);
-                            enemy_asteroid_init(new_enemy, ASTEROID_SMALL, e->phy.pos);
-
-                            break;
-                        }
-                        case ASTEROID_LARGE: {
-                            // init first split asteroid
-                            enemy_asteroid_init(e, ASTEROID_MEDIUM, e->phy.pos);
-
-                            // init second split asteroid
-                            enemy_state* new_enemy = get_dead_enemy(game);
-                            enemy_asteroid_init(new_enemy, ASTEROID_MEDIUM, e->phy.pos);
-
-                            break;
-                        }
-
-                        case SAUCER_SMALL: {
-                            e->type = DEAD;
-                            break;
-                        }
-                        case SAUCER_LARGE: {
-                            e->type = DEAD;
-                            break;
-                        }
-                        case DEAD:
-                        default: {
-                            fprintf(stderr, "Error: unhandled case %d\n", (u32)e->type);
-                            exit(1);
-                        }
-                    }
+                    enemy_kill(game, e);
                 }
             }
         }

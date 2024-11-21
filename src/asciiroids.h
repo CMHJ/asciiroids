@@ -95,6 +95,8 @@ typedef struct player_state {
     u32 score;
 } player_state;
 
+const v2 PLAYER_SIZE = {1.0f, 1.0f};
+
 typedef enum enemy_type {
     DEAD,
     ASTEROID_SMALL,
@@ -123,6 +125,7 @@ const f32 ENEMY_MAX_VEL[TOTAL_ENEMY_TYPES] = {0.0f, 9.0f, 6.0f, 3.0f, 6.0f, 4.0f
 
 typedef enum game_mode { GAME_NEW, GAME_RUNNING, GAME_QUIT } game_mode;
 
+// TODO: change this to max players and allow multiplayer
 #define PLAYERS 1
 #define MAX_ENEMIES 100
 typedef struct game_state {

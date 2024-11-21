@@ -10,9 +10,10 @@
 
 #include "asciiroids.h"
 #include "constants.h"
+#include "types.h"
+
 #include "input.c"
 #include "terminal.c"
-#include "types.h"
 
 // TODO(CMHJ): replace all uses of stdlib functions like printf with write
 

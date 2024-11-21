@@ -170,6 +170,7 @@ i32 main(i32 argc, char** argv) {
 
     u64 ts_frame_start = 0;
     u64 ts_cycle_start = 0;
+    u64 ts_end = 0;
     u64 ts_frame_elapsed = 0;
     u64 ts_cycle_elapsed = 0;
     while (state.mode != GAME_QUIT) {
@@ -184,17 +185,15 @@ i32 main(i32 argc, char** argv) {
 
         code.run_game_loop(&state, &buffer);
 
-        // TODO: timing is still slightly off in cycle ms, investigate
-        u64 ts_end = get_timestamp_ns();
-        ts_frame_elapsed = ts_end - ts_frame_start;
-        ts_cycle_elapsed = ts_end - ts_cycle_start;
-
         swprintf(buffer.data, buffer.size, L"frame: %f ms, cycle: %f ms", (f32)ts_frame_elapsed / 1e6,
                  (f32)ts_cycle_elapsed / 1e6);
 
-        ts_cycle_start = get_timestamp_ns();
-
         buffer_render(&buffer);
+
+        ts_end = get_timestamp_ns();
+        ts_frame_elapsed = ts_end - ts_frame_start;
+        ts_cycle_elapsed = ts_end - ts_cycle_start;
+        ts_cycle_start = get_timestamp_ns();
 
         static const f32 nanoseconds_in_second = 1000 * 1000 * 1000;
         const f32 time_in_frame = nanoseconds_in_second / FPS;

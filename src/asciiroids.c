@@ -78,52 +78,74 @@ static void enemy_saucer_init(screen_buffer* buffer, enemy_state* e) {
     e->phy.vel.y = vel_mag * deg_sin(e->phy.yaw);
 }
 
-static void game_init(game_state* state, screen_buffer* buffer) {
-    state->mode = GAME_RUNNING;
-    state->enemies_shot = 0;
-
-    // init players
-    state->players[0].alive = true;
-    state->players[0].lives = 4;
-    state->players[0].phy.pos = (v2){buffer->width / 2.0f, buffer->height / 2.0f};
-    state->players[0].phy.yaw = 90.0f;
-    state->players[0].score = 12345678;
-
-    // init starting asteroids
-    const u8 asteroids_num = 4;
-    for (u8 i = 0; i < asteroids_num; ++i) {
-        state->enemies[i].type = ASTEROID_LARGE;
+static void enemy_asteroid_circle_spawn(game_state* game, screen_buffer* buffer, u8 n) {
+    for (u8 i = 0; i < n; ++i) {
+        game->enemies[i].type = ASTEROID_LARGE;
         const f32 pos_angle_from_origin = get_random_angle();
         const f32 dist_from_centre = buffer->height / 2.0f;
         const v2 pos =
             (v2){dist_from_centre * deg_cos(pos_angle_from_origin), dist_from_centre * deg_sin(pos_angle_from_origin)};
 
-        enemy_asteroid_init(&state->enemies[i], ASTEROID_LARGE, pos);
+        enemy_asteroid_init(&game->enemies[i], ASTEROID_LARGE, pos);
     }
 }
 
-static void render_debug_overlay(screen_buffer* buffer, player_state* player, controller_state* controller) {
+static void game_init(game_state* game, screen_buffer* buffer) {
+    game->mode = GAME_RUNNING;
+    game->level = 0;
+    game->enemies_shot = 0;
+    game->level_delay_frames = 0;
+    game->enemies_asteroids_current_limit = 0;
+    game->enemies_asteroids_left = 0;
+
+    // init players
+    game->players[0].alive = true;
+    game->players[0].lives = 4;
+    game->players[0].phy.pos = (v2){buffer->width / 2.0f, buffer->height / 2.0f};
+    game->players[0].phy.yaw = 90.0f;
+    game->players[0].score = 12345678;
+}
+
+static u16 enemy_count(game_state* game) {
+    u16 count = 0;
+
+    for (u16 i = 0; i < MAX_ENEMIES; ++i) {
+        enemy_state* e = &game->enemies[i];
+        if (e->type != DEAD) {
+            ++count;
+        }
+    }
+
+    return count;
+}
+
+static void render_debug_overlay(screen_buffer* buffer, game_state* game) {
+    controller_state* p1_controller = &game->controllers[0];
+    player_state* p1 = &game->players[0];
+
     wchar_t msg_buf[100] = {0};
 
     // render debug numbers
     for (u8 i = 0; i < buffer->width; i++) {
         wchar_t c = L'0' + (i % 10);
-        printwc_xy(buffer, i, 3, c);
+        printwc_xy(buffer, i, 0, c);
     }
 
-    swprintf(msg_buf, sizeof(msg_buf), L"Yaw: %.2f", player->phy.yaw);
+    swprintf(msg_buf, sizeof(msg_buf), L"Total Enemies: %d", enemy_count(game));
+    print_xy(buffer, 0, 4, msg_buf, wcslen(msg_buf));
+    swprintf(msg_buf, sizeof(msg_buf), L"Yaw: %.2f", p1->phy.yaw);
+    print_xy(buffer, 0, 3, msg_buf, wcslen(msg_buf));
+    swprintf(msg_buf, sizeof(msg_buf), L"X: %.2f, Y: %.2f", p1->phy.pos.x, p1->phy.pos.y);
     print_xy(buffer, 0, 2, msg_buf, wcslen(msg_buf));
-    swprintf(msg_buf, sizeof(msg_buf), L"X: %.2f, Y: %.2f", player->phy.pos.x, player->phy.pos.y);
+    swprintf(msg_buf, sizeof(msg_buf), L"VelX: %.2f, VelY: %.2f Mag: %.2f", p1->phy.vel.x, p1->phy.vel.y,
+             v2_mag(p1->phy.vel));
     print_xy(buffer, 0, 1, msg_buf, wcslen(msg_buf));
-    swprintf(msg_buf, sizeof(msg_buf), L"VelX: %.2f, VelY: %.2f Mag: %.2f", player->phy.vel.x, player->phy.vel.y,
-             v2_mag(player->phy.vel));
-    print_xy(buffer, 0, 0, msg_buf, wcslen(msg_buf));
 
     // visualise keyboard input
-    buffer->data[buffer->size - 4] = controller->shoot ? DARK_SHADE : LIGHT_SHADE;
-    buffer->data[buffer->size - 3] = controller->left ? DARK_SHADE : LIGHT_SHADE;
-    buffer->data[buffer->size - 2] = controller->up ? DARK_SHADE : LIGHT_SHADE;
-    buffer->data[buffer->size - 1] = controller->right ? DARK_SHADE : LIGHT_SHADE;
+    buffer->data[buffer->size - 4] = p1_controller->shoot ? DARK_SHADE : LIGHT_SHADE;
+    buffer->data[buffer->size - 3] = p1_controller->left ? DARK_SHADE : LIGHT_SHADE;
+    buffer->data[buffer->size - 2] = p1_controller->up ? DARK_SHADE : LIGHT_SHADE;
+    buffer->data[buffer->size - 1] = p1_controller->right ? DARK_SHADE : LIGHT_SHADE;
 }
 
 static void render_bullets(screen_buffer* buffer, game_state* game) {
@@ -258,6 +280,24 @@ static void enemy_kill(game_state* game, enemy_state* e) {
     }
 }
 
+static void enemy_spawn_random_large_asteroid(game_state* game, screen_buffer* buffer) {
+    enemy_state* e = get_dead_enemy(game);
+
+    const bool top_spawn = rand() % 2;
+    u32 x;
+    u32 y;
+
+    if (top_spawn) {
+        x = rand() % buffer->width;
+        y = buffer->height - 1;
+    } else {
+        x = buffer->width - 1;
+        y = rand() % buffer->height;
+    }
+
+    enemy_asteroid_init(e, ASTEROID_LARGE, (v2){x, y});
+}
+
 static void update_enemies(screen_buffer* buffer, game_state* game) {
     for (u8 i = 0; i < MAX_ENEMIES; ++i) {
         enemy_state* e = &game->enemies[i];
@@ -389,19 +429,22 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
     }
 
     // spawn saucer if enough enemies have been shot
-    if (game->enemies_shot == 20) {
+    if (game->enemies_shot == 15) {
         game->enemies_shot = 0;
 
         enemy_state* e = get_dead_enemy(game);
         e->type = SAUCER_LARGE;
 
         game->enemies_saucers_spawned += 1;
-        if (game->enemies_saucers_spawned == 5) {
+        if (game->enemies_saucers_spawned == 3) {
             game->enemies_saucers_spawned = 0;
             e->type = SAUCER_SMALL;
         }
 
         enemy_saucer_init(buffer, e);
+    } else if ((game->enemies_shot == 7 || game->enemies_shot == 14) && game->enemies_asteroids_left > 0) {
+        game->enemies_asteroids_left -= 1;
+        enemy_spawn_random_large_asteroid(game, buffer);
     }
 }
 
@@ -420,6 +463,15 @@ static void update_bullets(screen_buffer* buffer, bullet* bullets) {
     }
 }
 
+static void game_start_next_level(game_state* game, screen_buffer* buffer) {
+    game->level += 1;
+    game->level_delay_frames = 180;
+    game->enemies_asteroids_left = game->enemies_asteroids_current_limit;
+    game->enemies_asteroids_current_limit += 1;
+
+    enemy_asteroid_circle_spawn(game, buffer, NEW_LEVEL_ASTEROID_COUNT);
+}
+
 RUN_GAME_LOOP(run_game_loop) {
     controller_state* keyboard_controller_state = &game->controllers[0];
     player_state* player1 = &game->players[0];
@@ -434,13 +486,22 @@ RUN_GAME_LOOP(run_game_loop) {
         game_init(game, buffer);
     }
 
+    // decrement level delay counter and check
+    if (enemy_count(game) <= 0) {
+        if (game->level_delay_frames == 0) {
+            game_start_next_level(game, buffer);
+        } else {
+            game->level_delay_frames -= 1;
+        }
+    }
+
     update_player(player1, keyboard_controller_state, buffer);
 
     update_position(buffer, &player1->phy);
     update_bullets(buffer, player1->bullets);
     update_enemies(buffer, game);
 
-    render_debug_overlay(buffer, player1, keyboard_controller_state);
+    render_debug_overlay(buffer, game);
     render_ui(buffer, game);
     render_enemies(buffer, game->enemies);
     render_bullets(buffer, game);

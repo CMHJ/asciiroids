@@ -128,14 +128,19 @@ typedef enum game_mode { GAME_NEW, GAME_RUNNING, GAME_QUIT } game_mode;
 // TODO: change this to max players and allow multiplayer
 #define PLAYERS 1
 #define MAX_ENEMIES 100
+#define NEW_LEVEL_ASTEROID_COUNT 4
 typedef struct game_state {
     game_mode mode;
+    u8 level;
     i8 controller_fds[PLAYERS];
     controller_state controllers[PLAYERS];
     player_state players[PLAYERS];
     enemy_state enemies[MAX_ENEMIES];
-    i8 enemies_shot;
+    i8 enemies_shot;  // TODO: change these to unsigned?
     i8 enemies_saucers_spawned;
+    u8 enemies_asteroids_current_limit;
+    u8 enemies_asteroids_left;
+    u16 level_delay_frames;
 } game_state;
 
 // define run_game_loop function type and default stub function

@@ -23,7 +23,9 @@ static void render_ui(screen_buffer* buffer, game_state* game) {
         const usize spacing = (buffer->width - 2 * margin) / 4;
         const usize x_offset = margin + (p_i + 1) * spacing;
 
-        // TODO: draw level counter
+        wchar_t msg_buf[4] = {0};
+        swprintf(msg_buf, sizeof(msg_buf), L"%d", game->level);
+        print_xy(buffer, buffer->width / 2, buffer->height - 1, msg_buf, wcslen(msg_buf));
 
         // draw score
         for (u32 score = player->score, c_i = 0; score > 0; score /= 10, ++c_i) {

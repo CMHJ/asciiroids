@@ -181,12 +181,16 @@ static bool bullet_collision(v2 target_pos, v2 target_size, v2 bullet_pos) {
 }
 
 static enemy_state* get_dead_enemy(game_state* game) {
+    enemy_state* e = NULL;
     for (u8 i = 0; i < MAX_ENEMIES; ++i) {
-        enemy_state* enemy = &(game->enemies[i]);
-        if (enemy->type == DEAD) {
-            return enemy;
+        e = &(game->enemies[i]);
+        if (e->type == DEAD) {
+            break;
         }
     }
+
+    assert(e != NULL);
+    return e;
 }
 
 static bool player_collision(v2 player_pos, v2 player_size, v2 enemy_pos, v2 enemy_size) {

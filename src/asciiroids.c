@@ -103,7 +103,7 @@ static void game_init(game_state* game, screen_buffer* buffer) {
     game->players[0].lives = 4;
     game->players[0].phy.pos = (v2){buffer->width / 2.0f, buffer->height / 2.0f};
     game->players[0].phy.yaw = 90.0f;
-    game->players[0].score = 12345678;
+    game->players[0].score = 12345678;  // TODO: implement scoring
 }
 
 static u16 enemy_count(game_state* game) {

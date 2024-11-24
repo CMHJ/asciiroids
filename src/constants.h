@@ -17,4 +17,6 @@
 // this factor accounts for that to make the speed seem smooth
 #define CHAR_SIZE_FACTOR 2.5f
 
+#define U32_MAX_DIGITS 10
+
 #endif  // ASCIIROIDS_CONSTANTS_H

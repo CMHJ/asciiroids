@@ -23,17 +23,14 @@ static void render_ui(screen_buffer* buffer, game_state* game) {
         const usize spacing = (buffer->width - 2 * margin) / 4;
         const usize x_offset = margin + (p_i + 1) * spacing;
 
-        wchar_t msg_buf[4] = {0};
-        swprintf(msg_buf, sizeof(msg_buf), L"%d", game->level);
+        // draw level counter
+        wchar_t msg_buf[U32_MAX_DIGITS + 1] = {0};
+        swprintf(msg_buf, sizeof(msg_buf), L"%02d", game->level);
         print_xy(buffer, buffer->width / 2, buffer->height - 1, msg_buf, wcslen(msg_buf));
 
         // draw score
-        for (u32 score = player->score, c_i = 0; score > 0; score /= 10, ++c_i) {
-            u32 score_num = score % 10;
-            wchar_t score_num_char = NUMBERS[score_num];
-
-            printwc_xy(buffer, x_offset - c_i, buffer->height - 2, score_num_char);
-        }
+        swprintf(msg_buf, sizeof(msg_buf), L"%d", player->score);
+        print_xy(buffer, x_offset, buffer->height - 2, msg_buf, wcslen(msg_buf));
 
         // draw lives
         for (u8 life = 0; life < player->lives; ++life) {
@@ -103,7 +100,21 @@ static void game_init(game_state* game, screen_buffer* buffer) {
     game->players[0].lives = 4;
     game->players[0].phy.pos = (v2){buffer->width / 2.0f, buffer->height / 2.0f};
     game->players[0].phy.yaw = 90.0f;
-    game->players[0].score = 12345678;  // TODO: implement scoring
+    game->players[0].score = 0;
+}
+
+static bool player_all_dead(game_state* game) {
+    bool all_dead = true;
+
+    for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
+        player_state* p = &game->players[p_i];
+        if (p->alive || p->lives > 0) {
+            all_dead = false;
+            break;
+        }
+    }
+
+    return all_dead;
 }
 
 static u16 enemy_count(game_state* game) {
@@ -414,19 +425,26 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                 }
 
                 if (bullet_collision(e->phy.pos, ENEMY_SIZE[e->type], b->phy.pos)) {
-                    // current enemy has been collided with, don't continue iterating
-                    j = PLAYERS;
-                    k = MAX_BULLETS;
+                    // add score to player
+                    player_state* p = &game->players[j];
+                    p->score += ENEMY_SCORES[e->type];
 
                     // remove bullet
                     b->life_frames = 0;
                     game->enemies_shot += 1;
 
                     enemy_kill(game, e);
+
+                    // current enemy has been collided with, don't continue iterating
+                    j = PLAYERS;
+                    k = MAX_BULLETS;
                 }
             }
         }
     }
+
+    // NOTE: the behaviour triggered by the largest number of enemies shot
+    // will reset the counter to not rely on wrapping
 
     // spawn saucer if enough enemies have been shot
     if (game->enemies_shot == 15) {
@@ -435,6 +453,7 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
         enemy_state* e = get_dead_enemy(game);
         e->type = SAUCER_LARGE;
 
+        // spawn a small saucer every few saucers spawned
         game->enemies_saucers_spawned += 1;
         if (game->enemies_saucers_spawned == 3) {
             game->enemies_saucers_spawned = 0;
@@ -443,6 +462,7 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
 
         enemy_saucer_init(buffer, e);
     } else if ((game->enemies_shot == 7 || game->enemies_shot == 14) && game->enemies_asteroids_left > 0) {
+        // spawn a new large asteroid once a number of enemies has been shot
         game->enemies_asteroids_left -= 1;
         enemy_spawn_random_large_asteroid(game, buffer);
     }
@@ -470,6 +490,10 @@ static void game_start_next_level(game_state* game, screen_buffer* buffer) {
     game->enemies_asteroids_current_limit += 1;
 
     enemy_asteroid_circle_spawn(game, buffer, NEW_LEVEL_ASTEROID_COUNT);
+}
+
+static void render_gameover_screen(screen_buffer* buffer) {
+    print_xy(buffer, buffer->width / 2 - 6, buffer->height / 2 - 1, L"Hello there!", 12);
 }
 
 RUN_GAME_LOOP(run_game_loop) {
@@ -506,4 +530,12 @@ RUN_GAME_LOOP(run_game_loop) {
     render_enemies(buffer, game->enemies);
     render_bullets(buffer, game);
     render_player(buffer, player1);
+
+    if (player_all_dead(game)) {
+        if (game->level_delay_frames == 0) {
+            render_gameover_screen(buffer);
+        } else {
+            game->level_delay_frames -= 1;
+        }
+    }
 }

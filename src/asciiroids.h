@@ -22,6 +22,7 @@ const wchar_t SAUCER_SMALL_RIGHT = L'\U0001FB51';
 
 const wchar_t U_BULLET = L'\u00B7';
 
+// TODO: remove this
 #define NUMBERS_NUM 10
 const wchar_t NUMBERS[NUMBERS_NUM] = {
     L'\U0001FBF0', L'\U0001FBF1', L'\U0001FBF2', L'\U0001FBF3', L'\U0001FBF4',
@@ -122,6 +123,8 @@ const v2 ENEMY_SIZE[TOTAL_ENEMY_TYPES] = {
 };
 
 const f32 ENEMY_MAX_VEL[TOTAL_ENEMY_TYPES] = {0.0f, 9.0f, 6.0f, 3.0f, 6.0f, 4.0f};
+
+const u8 ENEMY_SCORES[TOTAL_ENEMY_TYPES] = {0, 10, 10, 10, 50, 100};
 
 typedef enum game_mode { GAME_NEW, GAME_RUNNING, GAME_QUIT } game_mode;
 

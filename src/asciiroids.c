@@ -95,6 +95,7 @@ static void game_init(game_state* game, screen_buffer* buffer) {
 
     // init players
     game->players[0].alive = true;
+    game->players[0].lives = 4;
     game->players[0].phy.pos = (v2){buffer->width / 2.0f, buffer->height / 2.0f};
     game->players[0].phy.yaw = 90.0f;
 }

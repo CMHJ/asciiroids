@@ -492,7 +492,7 @@ static void game_start_next_level(game_state* game, screen_buffer* buffer) {
 static void render_gameover_screen(screen_buffer* buffer) {
     static const wchar_t* game_over_msg = L"GAME OVER";
     static const usize game_over_len = 9;
-    print_xy(buffer, buffer->width / 2 - game_over_len / 2 + 1, buffer->height / 2 - 1, game_over_msg, game_over_len);
+    print_xy(buffer, buffer->width / 2 - game_over_len / 2, buffer->height / 2 - 1, game_over_msg, game_over_len);
 }
 
 RUN_GAME_LOOP(run_game_loop) {

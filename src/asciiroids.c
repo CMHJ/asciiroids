@@ -532,6 +532,14 @@ RUN_GAME_LOOP(run_game_loop) {
     if (player_all_dead(game)) {
         if (game->level_delay_frames == 0) {
             render_gameover_screen(buffer);
+
+            for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
+                controller_state* c = &game->controllers[p_i];
+                if (c->shoot) {
+                    game->mode = GAME_NEW;
+                    break;
+                }
+            }
         } else {
             game->level_delay_frames -= 1;
         }

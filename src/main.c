@@ -22,21 +22,23 @@ typedef struct game_code {
     run_game_loop_function_type* run_game_loop;
 } game_code;
 
-static void game_state_init(game_state* state) {
-    state->mode = GAME_NEW;
-
+static void controllers_init(i8* controller_fds) {
     // get inputs
     // TODO(CMHJ): convert these back to printf and remove wide versions
     wprintf(L"Press the enter key...\n");
     // funnily enough this seems to detect the enter key event from starting the program
     const i8 keyboard_fd = keyboard_detect();
-    state->controller_fds[0] = keyboard_fd;
+
+    // assume all players use the controller
+    for (u8 i = 0; i < PLAYERS; ++i) {
+        controller_fds[i] = keyboard_fd;
+    }
 }
 
-static void game_state_deinit(game_state* state) {
+static void controllers_deinit(i8* controller_fds) {
     // close inputs
     for (u8 player = 0; player < PLAYERS; ++player) {
-        close(state->controller_fds[player]);
+        close(controller_fds[player]);
     }
 }
 
@@ -158,7 +160,10 @@ i32 main(i32 argc, char** argv) {
     buffer_set(&buffer, LIGHT_SHADE);
 
     game_state state = {0};
-    game_state_init(&state);
+    state.mode = GAME_NEW;
+
+    i8 controller_fds[PLAYERS] = {0};
+    controllers_init(controller_fds);
 
     // init game lib modify time using file_has_changed
     i64 game_lib_last_modify_time = 0;
@@ -181,7 +186,7 @@ i32 main(i32 argc, char** argv) {
             game_code_load(&code, game_lib_path);
         }
 
-        update_inputs(&state);
+        update_inputs(&state, controller_fds);
 
         code.run_game_loop(&state, &buffer);
 
@@ -204,7 +209,7 @@ i32 main(i32 argc, char** argv) {
     }
 
     game_code_unload(&code);
-    game_state_deinit(&state);
+    controllers_deinit(controller_fds);
     terminal_teardown();
 
     return EXIT_SUCCESS;

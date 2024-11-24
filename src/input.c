@@ -76,8 +76,8 @@ static void keyboard_state_update(const i8 fd, controller_state* ctrlr_state) {
     }
 }
 
-static void update_inputs(game_state* state) {
-    const i8 keyboard_fd = state->controller_fds[0];
+static void update_inputs(game_state* state, i8* controller_fds) {
+    const i8 keyboard_fd = controller_fds[0];
     controller_state* keyboard_controller_state = &state->controllers[0];
     keyboard_state_update(keyboard_fd, keyboard_controller_state);
 }

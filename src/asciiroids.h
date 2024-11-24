@@ -135,7 +135,6 @@ typedef enum game_mode { GAME_NEW, GAME_RUNNING, GAME_QUIT } game_mode;
 typedef struct game_state {
     game_mode mode;
     u8 level;
-    i8 controller_fds[PLAYERS];
     controller_state controllers[PLAYERS];
     player_state players[PLAYERS];
     enemy_state enemies[MAX_ENEMIES];

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <wchar.h>
+#include <string.h>
 
 #include "constants.h"
 #include "print.h"
@@ -88,19 +89,14 @@ static void enemy_asteroid_circle_spawn(game_state* game, screen_buffer* buffer,
 }
 
 static void game_init(game_state* game, screen_buffer* buffer) {
+    memset(game, 0, sizeof(game_state));
+
     game->mode = GAME_RUNNING;
-    game->level = 0;
-    game->enemies_shot = 0;
-    game->level_delay_frames = 0;
-    game->enemies_asteroids_current_limit = 0;
-    game->enemies_asteroids_left = 0;
 
     // init players
     game->players[0].alive = true;
-    game->players[0].lives = 4;
     game->players[0].phy.pos = (v2){buffer->width / 2.0f, buffer->height / 2.0f};
     game->players[0].phy.yaw = 90.0f;
-    game->players[0].score = 0;
 }
 
 static bool player_all_dead(game_state* game) {

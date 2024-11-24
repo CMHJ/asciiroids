@@ -171,8 +171,8 @@ i32 main(i32 argc, char** argv) {
     u64 ts_frame_start = 0;
     u64 ts_cycle_start = 0;
     u64 ts_end = 0;
-    u64 ts_frame_elapsed = 0;
-    u64 ts_cycle_elapsed = 0;
+    u64 frame_elapsed_ns = 0;
+    u64 cycle_elapsed_ns = 0;
     while (state.mode != GAME_QUIT) {
         ts_frame_start = get_timestamp_ns();
 
@@ -191,15 +191,15 @@ i32 main(i32 argc, char** argv) {
         buffer_render(&buffer);
 
         ts_end = get_timestamp_ns();
-        ts_frame_elapsed = ts_end - ts_frame_start;
-        ts_cycle_elapsed = ts_end - ts_cycle_start;
+        frame_elapsed_ns = ts_end - ts_frame_start;
+        cycle_elapsed_ns = ts_end - ts_cycle_start;
         ts_cycle_start = get_timestamp_ns();
 
         static const f32 nanoseconds_in_second = 1000 * 1000 * 1000;
-        const f32 time_in_frame = nanoseconds_in_second / FPS;
-        const f32 remaining_time_in_frame = time_in_frame - ts_frame_elapsed;
-        if (remaining_time_in_frame > 0) {
-            sleep_ns(remaining_time_in_frame);
+        const f32 cycle_period_ns = nanoseconds_in_second / FPS;
+        const f32 remaining_time_in_cycle_ns = cycle_period_ns - frame_elapsed_ns;
+        if (remaining_time_in_cycle_ns > 0) {
+            sleep_ns(remaining_time_in_cycle_ns);
         }
     }
 

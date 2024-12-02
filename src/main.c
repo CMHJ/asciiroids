@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <wchar.h>
+#include <signal.h>
 
 #include "asciiroids.h"
 #include "constants.h"
@@ -142,6 +143,12 @@ static void game_code_unload(game_code* code) {
     }
 }
 
+void cleanup(int sys_signal) {
+    (void)sys_signal;  // unused
+    system("reset");   // reset terminal settings, terminal_teardown doesn't work and just hangs for some reason
+    exit(0);
+}
+
 i32 main(i32 argc, char** argv) {
     // TODO(CMHJ): remove this
     (void)argc;
@@ -157,7 +164,11 @@ i32 main(i32 argc, char** argv) {
     srand(0);  // have the same seed each time
     setlocale(LC_CTYPE, "");
     terminal_setup();
-    // TODO(CMHJ): add trap for Ctrl-C signal to do cleanup so that terminal settings are reset properly
+
+    // restore terminal settings if killed
+    signal(SIGINT, cleanup);
+    signal(SIGTERM, cleanup);
+    signal(SIGKILL, cleanup);
 
     screen_buffer buffer = {.width = SCREEN_BUFFER_WIDTH,
                             .height = SCREEN_BUFFER_HEIGHT,

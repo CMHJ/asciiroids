@@ -177,7 +177,7 @@ i32 main(i32 argc, char** argv) {
     buffer_set(&buffer, LIGHT_SHADE);
 
     game_state state = {0};
-    state.mode = GAME_NEW;
+    state.mode = GAME_MAIN_MENU;
 
     i8 controller_fds[PLAYERS] = {0};
     controllers_init(controller_fds);

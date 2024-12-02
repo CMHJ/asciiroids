@@ -509,43 +509,60 @@ RUN_GAME_LOOP(run_game_loop) {
         game_init(game, buffer);
     }
 
-    // decrement level delay counter and check
-    if (enemy_count(game) <= 0) {
-        if (game->level_delay_frames == 0) {
-            game_start_next_level(game, buffer);
-        } else {
-            game->level_delay_frames -= 1;
+    if (game->mode == GAME_MAIN_MENU) {
+        wchar_t* title = L"ASCIIROIDS";
+        u32 y = buffer->height / 4 * 3;
+        print_xy(buffer, buffer->width / 2 - 5, y, title, 10);
+
+        for (u8 m_i = 0; m_i < 1; ++m_i) {
+            wchar_t* menu_entries[] = {L"Single Player"};
+            u8 string_len = wcslen(menu_entries[0]);
+            u32 x = buffer->width / 2 - string_len / 2;
+            print_xy(buffer, x, y - 2, menu_entries[0], string_len);
+
+            if (m_i == game->menu_selection) {
+                printwc_xy(buffer, x - 2, y - 2, L'>');
+            }
         }
-    }
+    } else if (game->mode == GAME_RUNNING) {
+        // decrement level delay counter and check
+        if (enemy_count(game) <= 0) {
+            if (game->level_delay_frames == 0) {
+                game_start_next_level(game, buffer);
+            } else {
+                game->level_delay_frames -= 1;
+            }
+        }
 
-    update_player(player1, keyboard_controller_state, buffer);
+        update_player(player1, keyboard_controller_state, buffer);
 
-    update_position(buffer, &player1->phy);
-    update_bullets(buffer, player1->bullets);
-    update_enemies(buffer, game);
+        update_position(buffer, &player1->phy);
+        update_bullets(buffer, player1->bullets);
+        update_enemies(buffer, game);
 
 #ifndef RELEASE
-    render_debug_overlay(buffer, game);
+        render_debug_overlay(buffer, game);
 #endif
 
-    render_ui(buffer, game);
-    render_enemies(buffer, game->enemies);
-    render_bullets(buffer, game);
-    render_player(buffer, player1);
+        render_ui(buffer, game);
+        render_enemies(buffer, game->enemies);
+        render_bullets(buffer, game);
+        render_player(buffer, player1);
 
-    if (player_all_dead(game)) {
-        if (game->level_delay_frames == 0) {
-            render_gameover_screen(buffer);
+        if (player_all_dead(game)) {
+            if (game->level_delay_frames == 0) {
+                render_gameover_screen(buffer);
 
-            for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
-                controller_state* c = &game->controllers[p_i];
-                if (c->shoot) {
-                    game->mode = GAME_NEW;
-                    break;
+                for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
+                    controller_state* c = &game->controllers[p_i];
+                    if (c->shoot) {
+                        game->mode = GAME_NEW;
+                        break;
+                    }
                 }
+            } else {
+                game->level_delay_frames -= 1;
             }
-        } else {
-            game->level_delay_frames -= 1;
         }
     }
 }

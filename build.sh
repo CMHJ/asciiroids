@@ -7,10 +7,19 @@ OPTIONS="-std=c99 -O0 -g -Wall -Wextra -Wpedantic -fsanitize=address,undefined"
 
 mkdir -p "$TOP/build"
 
-# TODO(CMHJ): work out why asan is cracking the shits about global constants
-gcc -fPIC -shared -std=c99 -g -o "$TOP"/build/libasciiroids.so "$TOP"/src/asciiroids.c
+case "$1" in
+release)
+    gcc -std=c99 -DRELEASE -g -o "$TOP"/build/asciiroids \
+        "$TOP"/src/main.c \
+        -lm
+    ;;
+*)
+    # TODO(CMHJ): work out why asan is cracking the shits about global constants
+    gcc -fPIC -shared -std=c99 -g -o "$TOP"/build/libasciiroids.so "$TOP"/src/asciiroids.c
 
-gcc \
-    $OPTIONS \
-    -o "$TOP"/build/asciiroids \
-    "$TOP"/src/main.c
+    gcc \
+        $OPTIONS \
+        -o "$TOP"/build/asciiroids \
+        "$TOP"/src/main.c
+    ;;
+esac

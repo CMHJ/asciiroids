@@ -15,6 +15,10 @@
 #include "input.c"
 #include "terminal.c"
 
+#ifdef RELEASE
+#include "asciiroids.c"
+#endif
+
 // TODO(CMHJ): replace all uses of stdlib functions like printf with write
 
 typedef struct game_code {
@@ -143,10 +147,12 @@ i32 main(i32 argc, char** argv) {
     (void)argc;
     char* binary_path = argv[0];
 
+#ifndef RELEASE
     // assumes game lib is in same dir as binary
     char game_lib_path[MAX_PATH] = {0};
     get_dir_path(game_lib_path, binary_path);
     string_concat(game_lib_path, "/libasciiroids.so");
+#endif
 
     srand(0);  // have the same seed each time
     setlocale(LC_CTYPE, "");
@@ -165,13 +171,20 @@ i32 main(i32 argc, char** argv) {
     i8 controller_fds[PLAYERS] = {0};
     controllers_init(controller_fds);
 
+#ifndef RELEASE
     // init game lib modify time using file_has_changed
     i64 game_lib_last_modify_time = 0;
     file_has_changed(game_lib_path, &game_lib_last_modify_time);
+#endif
 
     game_code code = {0};
+
+#ifndef RELEASE
     code.run_game_loop = run_game_loop_stub;
     game_code_load(&code, game_lib_path);
+#else
+    code.run_game_loop = run_game_loop;
+#endif
 
     u64 ts_frame_start = 0;
     u64 ts_cycle_start = 0;
@@ -181,17 +194,21 @@ i32 main(i32 argc, char** argv) {
     while (state.mode != GAME_QUIT) {
         ts_frame_start = get_timestamp_ns();
 
+#ifndef RELEASE
         if (file_has_changed(game_lib_path, &game_lib_last_modify_time)) {
             game_code_unload(&code);
             game_code_load(&code, game_lib_path);
         }
+#endif
 
         update_inputs(&state, controller_fds);
 
         code.run_game_loop(&state, &buffer);
 
-        swprintf(buffer.data, buffer.size, L"frame: %f ms, cycle: %f ms", (f32)ts_frame_elapsed / 1e6,
-                 (f32)ts_cycle_elapsed / 1e6);
+#ifndef RELEASE
+        swprintf(buffer.data + buffer.size - buffer.width, buffer.size, L"frame: %f ms, cycle: %f ms",
+                 (f32)frame_elapsed_ns / 1e6, (f32)cycle_elapsed_ns / 1e6);
+#endif
 
         buffer_render(&buffer);
 
@@ -208,7 +225,10 @@ i32 main(i32 argc, char** argv) {
         }
     }
 
+#ifndef RELEASE
     game_code_unload(&code);
+#endif
+
     controllers_deinit(controller_fds);
     terminal_teardown();
 

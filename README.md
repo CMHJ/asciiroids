@@ -14,7 +14,9 @@ sudo usermod -aG input "$USER"
 # Building
 
 ```sh
-./build.sh
+./build.sh  # debug
+# or
+./build.sh release  # release
 ```
 
 # Todo

@@ -133,21 +133,21 @@ static void render_debug_overlay(screen_buffer* buffer, game_state* game) {
 
     wchar_t msg_buf[100] = {0};
 
+    swprintf(msg_buf, sizeof(msg_buf), L"Total Enemies: %d", enemy_count(game));
+    print_xy(buffer, 0, 5, msg_buf, wcslen(msg_buf));
+    swprintf(msg_buf, sizeof(msg_buf), L"Yaw: %.2f", p1->phy.yaw);
+    print_xy(buffer, 0, 4, msg_buf, wcslen(msg_buf));
+    swprintf(msg_buf, sizeof(msg_buf), L"X: %.2f, Y: %.2f", p1->phy.pos.x, p1->phy.pos.y);
+    print_xy(buffer, 0, 3, msg_buf, wcslen(msg_buf));
+    swprintf(msg_buf, sizeof(msg_buf), L"VelX: %.2f, VelY: %.2f Mag: %.2f", p1->phy.vel.x, p1->phy.vel.y,
+             v2_mag(p1->phy.vel));
+    print_xy(buffer, 0, 2, msg_buf, wcslen(msg_buf));
+
     // render debug numbers
     for (u8 i = 0; i < buffer->width; i++) {
         wchar_t c = L'0' + (i % 10);
-        printwc_xy(buffer, i, 0, c);
+        printwc_xy(buffer, i, 1, c);
     }
-
-    swprintf(msg_buf, sizeof(msg_buf), L"Total Enemies: %d", enemy_count(game));
-    print_xy(buffer, 0, 4, msg_buf, wcslen(msg_buf));
-    swprintf(msg_buf, sizeof(msg_buf), L"Yaw: %.2f", p1->phy.yaw);
-    print_xy(buffer, 0, 3, msg_buf, wcslen(msg_buf));
-    swprintf(msg_buf, sizeof(msg_buf), L"X: %.2f, Y: %.2f", p1->phy.pos.x, p1->phy.pos.y);
-    print_xy(buffer, 0, 2, msg_buf, wcslen(msg_buf));
-    swprintf(msg_buf, sizeof(msg_buf), L"VelX: %.2f, VelY: %.2f Mag: %.2f", p1->phy.vel.x, p1->phy.vel.y,
-             v2_mag(p1->phy.vel));
-    print_xy(buffer, 0, 1, msg_buf, wcslen(msg_buf));
 
     // visualise keyboard input
     buffer->data[buffer->size - 4] = p1_controller->shoot ? DARK_SHADE : LIGHT_SHADE;
@@ -490,8 +490,8 @@ static void game_start_next_level(game_state* game, screen_buffer* buffer) {
 }
 
 static void render_gameover_screen(screen_buffer* buffer) {
-    static const wchar_t* game_over_msg = L"GAME OVER";
-    static const usize game_over_len = 9;
+    static wchar_t* game_over_msg = L"GAME OVER";
+    static usize game_over_len = 9;
     print_xy(buffer, buffer->width / 2 - game_over_len / 2, buffer->height / 2 - 1, game_over_msg, game_over_len);
 }
 
@@ -524,7 +524,10 @@ RUN_GAME_LOOP(run_game_loop) {
     update_bullets(buffer, player1->bullets);
     update_enemies(buffer, game);
 
+#ifndef RELEASE
     render_debug_overlay(buffer, game);
+#endif
+
     render_ui(buffer, game);
     render_enemies(buffer, game->enemies);
     render_bullets(buffer, game);

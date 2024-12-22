@@ -70,6 +70,7 @@ typedef struct controller_state {
     bool up;
     bool left;
     bool right;
+    bool down;
     bool shoot;
     bool quit;
 } controller_state;
@@ -129,15 +130,16 @@ static const u8 ENEMY_SCORES[TOTAL_ENEMY_TYPES] = {0, 10, 10, 10, 50, 100};
 typedef enum game_mode { GAME_NEW, GAME_MAIN_MENU, GAME_RUNNING, GAME_QUIT } game_mode;
 
 // TODO: change this to max players and allow multiplayer
-#define PLAYERS 1
+#define PLAYERS_MAX 4
 #define MAX_ENEMIES 100
 #define NEW_LEVEL_ASTEROID_COUNT 4
 typedef struct game_state {
     game_mode mode;
     u8 menu_selection;
     u8 level;
-    controller_state controllers[PLAYERS];
-    player_state players[PLAYERS];
+    controller_state controllers[PLAYERS_MAX];
+    u8 num_players;
+    player_state players[PLAYERS_MAX];
     enemy_state enemies[MAX_ENEMIES];
     i8 enemies_shot;  // TODO: change these to unsigned?
     i8 enemies_saucers_spawned;

@@ -34,15 +34,15 @@ static void controllers_init(i8* controller_fds) {
     // funnily enough this seems to detect the enter key event from starting the program
     const i8 keyboard_fd = keyboard_detect();
 
-    // assume all players use the controller
-    for (u8 i = 0; i < PLAYERS; ++i) {
+    // assume all players use the keyboard
+    for (u8 i = 0; i < PLAYERS_MAX; ++i) {
         controller_fds[i] = keyboard_fd;
     }
 }
 
 static void controllers_deinit(i8* controller_fds) {
     // close inputs
-    for (u8 player = 0; player < PLAYERS; ++player) {
+    for (u8 player = 0; player < PLAYERS_MAX; ++player) {
         close(controller_fds[player]);
     }
 }
@@ -179,7 +179,7 @@ i32 main(i32 argc, char** argv) {
     game_state state = {0};
     state.mode = GAME_MAIN_MENU;
 
-    i8 controller_fds[PLAYERS] = {0};
+    i8 controller_fds[PLAYERS_MAX] = {0};
     controllers_init(controller_fds);
 
 #ifndef RELEASE

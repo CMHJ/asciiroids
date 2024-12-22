@@ -19,7 +19,7 @@
 #define array_len(a) (sizeof(a) / sizeof(a[0]))
 
 static void render_ui(screen_buffer* buffer, game_state* game) {
-    for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
+    for (u8 p_i = 0; p_i < game->num_players; ++p_i) {
         player_state* player = &game->players[p_i];
 
         static const usize margin = 2;
@@ -91,10 +91,15 @@ static void enemy_asteroid_circle_spawn(game_state* game, screen_buffer* buffer,
 }
 
 static void game_init(game_state* game, screen_buffer* buffer) {
+    // store num players from menu choice
+    const u8 num_players = game->num_players;
+
     memset(game, 0, sizeof(game_state));
 
     game->mode = GAME_RUNNING;
+    game->num_players = num_players;
 
+    // TODO: do this for all players
     // init players
     game->players[0].alive = true;
     game->players[0].lives = 4;
@@ -105,7 +110,7 @@ static void game_init(game_state* game, screen_buffer* buffer) {
 static bool player_all_dead(game_state* game) {
     bool all_dead = true;
 
-    for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
+    for (u8 p_i = 0; p_i < game->num_players; ++p_i) {
         player_state* p = &game->players[p_i];
         if (p->alive || p->lives > 0) {
             all_dead = false;
@@ -159,7 +164,7 @@ static void render_debug_overlay(screen_buffer* buffer, game_state* game) {
 }
 
 static void render_bullets(screen_buffer* buffer, game_state* game) {
-    for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
+    for (u8 p_i = 0; p_i < game->num_players; ++p_i) {
         player_state* player = &game->players[p_i];
 
         for (u8 i = 0; i < MAX_BULLETS; ++i) {
@@ -323,7 +328,7 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
         update_position(buffer, &e->phy);
 
         // check for collision with player
-        for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
+        for (u8 p_i = 0; p_i < game->num_players; ++p_i) {
             player_state* p = &game->players[p_i];
             if (p->alive == false) {
                 continue;
@@ -364,7 +369,7 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                     f32 min_mag = INFINITY;
                     v2 min_mag_vec = {0};
                     bool player_alive = false;
-                    for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
+                    for (u8 p_i = 0; p_i < game->num_players; ++p_i) {
                         player_state* player = &game->players[p_i];
                         if (player->alive == false) {
                             continue;
@@ -405,7 +410,7 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                 update_position(buffer, &e->saucer_bullet.phy);
 
                 // check saucer bullet for collisions
-                for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
+                for (u8 p_i = 0; p_i < game->num_players; ++p_i) {
                     player_state* p = &game->players[p_i];
                     if (bullet_collision(p->phy.pos, PLAYER_SIZE, e->saucer_bullet.phy.pos)) {
                         e->saucer_bullet.life_frames = 0;
@@ -416,7 +421,7 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
         }
 
         // check bullet collisions
-        for (u8 j = 0; j < PLAYERS; ++j) {
+        for (u8 j = 0; j < game->num_players; ++j) {
             for (u8 k = 0; k < MAX_BULLETS; ++k) {
                 bullet* b = &game->players[j].bullets[k];
                 if (b->life_frames == 0) {
@@ -435,7 +440,7 @@ static void update_enemies(screen_buffer* buffer, game_state* game) {
                     enemy_kill(game, e);
 
                     // current enemy has been collided with, don't continue iterating
-                    j = PLAYERS;
+                    j = game->num_players;
                     k = MAX_BULLETS;
                 }
             }
@@ -512,20 +517,38 @@ RUN_GAME_LOOP(run_game_loop) {
     }
 
     if (game->mode == GAME_MAIN_MENU) {
-        wchar_t* title = L"ASCIIROIDS";
-        u32 y = buffer->height / 4 * 3;
-        print_xy(buffer, buffer->width / 2 - 5, y, title, 10);
+        static wchar_t* title = L"ASCIIROIDS";
+        static wchar_t* menu_entries[] = {L"Single Player", L"Two Players", L"Three Players", L"Four Players", L"Quit"};
 
-        for (u8 m_i = 0; m_i < 1; ++m_i) {
-            wchar_t* menu_entries[] = {L"Single Player"};
-            u8 string_len = wcslen(menu_entries[0]);
+        u32 menu_start_y = buffer->height / 4 * 3;
+        print_xy(buffer, buffer->width / 2 - 5, menu_start_y, title, 10);
+
+        // update selection
+        controller_state* p1_con = &game->controllers[0];
+        if (p1_con->shoot) {
+            game->num_players = 1;
+            game->mode = GAME_NEW;
+        } else if (p1_con->up) {
+            if (game->menu_selection == 0) {
+                game->menu_selection = array_len(menu_entries) - 1;
+            } else {
+                game->menu_selection = (game->menu_selection - 1);
+            }
+        } else if (p1_con->down) {
+            game->menu_selection = (game->menu_selection + 1) % array_len(menu_entries);
+        }
+
+        // print menu entries
+        for (u8 m_i = 0; m_i < array_len(menu_entries); ++m_i) {
+            u8 string_len = wcslen(menu_entries[m_i]);
             u32 x = buffer->width / 2 - string_len / 2;
-            print_xy(buffer, x, y - 2, menu_entries[0], string_len);
+            print_xy(buffer, x, menu_start_y - 2 - m_i, menu_entries[m_i], string_len);
 
             if (m_i == game->menu_selection) {
-                printwc_xy(buffer, x - 2, y - 2, L'>');
+                printwc_xy(buffer, x - 2, menu_start_y - 2 - m_i, L'>');
             }
         }
+
     } else if (game->mode == GAME_RUNNING) {
         // decrement level delay counter and check
         if (enemy_count(game) <= 0) {
@@ -555,10 +578,10 @@ RUN_GAME_LOOP(run_game_loop) {
             if (game->level_delay_frames == 0) {
                 render_gameover_screen(buffer);
 
-                for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
+                for (u8 p_i = 0; p_i < game->num_players; ++p_i) {
                     controller_state* c = &game->controllers[p_i];
                     if (c->shoot) {
-                        game->mode = GAME_NEW;
+                        game->mode = GAME_MAIN_MENU;
                         break;
                     }
                 }

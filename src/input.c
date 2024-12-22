@@ -60,6 +60,14 @@ static void keyboard_state_update(const i8 fd, controller_state* ctrlr_state) {
                 }
                 break;
             }
+            case KEY_DOWN: {
+                if (event.value == RELEASED) {
+                    ctrlr_state->down = false;
+                } else if (event.value == PRESSED) {
+                    ctrlr_state->down = true;
+                }
+                break;
+            }
             case KEY_SPACE: {
                 if (event.value == RELEASED) {
                     ctrlr_state->shoot = false;

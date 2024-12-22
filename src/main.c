@@ -241,7 +241,10 @@ i32 main(i32 argc, char** argv) {
 #endif
 
     controllers_deinit(controller_fds);
-    terminal_teardown();
 
-    return EXIT_SUCCESS;
+    // programs exits here and terminal_teardown is not called
+    cleanup(0);
+
+    // TODO: make this cleanly exit instead of relying on lazy call to reset
+    terminal_teardown();
 }

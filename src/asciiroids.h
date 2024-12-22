@@ -133,6 +133,7 @@ typedef enum game_mode { GAME_NEW, GAME_MAIN_MENU, GAME_RUNNING, GAME_QUIT } gam
 #define PLAYERS_MAX 4
 #define MAX_ENEMIES 100
 #define NEW_LEVEL_ASTEROID_COUNT 4
+#define MENU_DEBOUNCE_FRAMES 10  // arbitrary constant that felt alright
 typedef struct game_state {
     game_mode mode;
     u8 menu_selection;

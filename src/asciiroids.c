@@ -510,8 +510,6 @@ static void render_gameover_screen(screen_buffer* buffer) {
 }
 
 void update_main_menu(game_state* game, screen_buffer* buffer) {
-    // arbitrary constant that felt alright
-    static const u8 MENU_DEBOUNCE_FRAMES = 10;
     static wchar_t* title = L"ASCIIROIDS";
     static wchar_t* menu_entries[] = {L"Single Player", L"Two Players", L"Three Players", L"Four Players", L"Quit"};
 
@@ -611,6 +609,7 @@ RUN_GAME_LOOP(run_game_loop) {
                 for (u8 p_i = 0; p_i < game->num_players; ++p_i) {
                     controller_state* c = &game->controllers[p_i];
                     if (c->shoot) {
+                        game->menu_debounce = MENU_DEBOUNCE_FRAMES;
                         game->mode = GAME_MAIN_MENU;
                         break;
                     }

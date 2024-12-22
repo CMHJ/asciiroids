@@ -16,6 +16,8 @@
 #include "print.c"
 #include "utility.c"
 
+#define array_len(a) (sizeof(a) / sizeof(a[0]))
+
 static void render_ui(screen_buffer* buffer, game_state* game) {
     for (u8 p_i = 0; p_i < PLAYERS; ++p_i) {
         player_state* player = &game->players[p_i];

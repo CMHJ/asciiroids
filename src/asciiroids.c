@@ -99,12 +99,17 @@ static void game_init(game_state* game, screen_buffer* buffer) {
     game->mode = GAME_RUNNING;
     game->num_players = num_players;
 
-    // TODO: do this for all players
     // init players
-    game->players[0].alive = true;
-    game->players[0].lives = 4;
-    game->players[0].phy.pos = (v2){buffer->width / 2.0f, buffer->height / 2.0f};
-    game->players[0].phy.yaw = 90.0f;
+    for (u8 p_i = 0; p_i < game->num_players; ++p_i) {
+        i8 x_offset = (-num_players / 2 + p_i);
+        f32 x = buffer->width / 2.0f + x_offset;
+        f32 y = buffer->height / 2.0f;
+
+        game->players[p_i].alive = true;
+        game->players[p_i].lives = 4;
+        game->players[p_i].phy.pos = (v2){x, y};
+        game->players[p_i].phy.yaw = 90.0f;
+    }
 }
 
 static bool player_all_dead(game_state* game) {
@@ -514,7 +519,7 @@ void update_main_menu(game_state* game, screen_buffer* buffer) {
     // update selection
     controller_state* p1_con = &game->controllers[0];
     if (game->menu_debounce == 0) {
-    if (p1_con->shoot) {
+        if (p1_con->shoot) {
             // max value is quit
             if (game->menu_selection == (array_len(menu_entries) - 1)) {
                 game->num_players = 0;
@@ -523,19 +528,19 @@ void update_main_menu(game_state* game, screen_buffer* buffer) {
             // else start game with selected players
             else {
                 game->num_players = game->menu_selection + 1;
-        game->mode = GAME_NEW;
+                game->mode = GAME_NEW;
             }
-    } else if (p1_con->up) {
+        } else if (p1_con->up) {
             game->menu_debounce = MENU_DEBOUNCE_FRAMES;
 
-        if (game->menu_selection == 0) {
-            game->menu_selection = array_len(menu_entries) - 1;
-        } else {
-            game->menu_selection = (game->menu_selection - 1);
-        }
-    } else if (p1_con->down) {
+            if (game->menu_selection == 0) {
+                game->menu_selection = array_len(menu_entries) - 1;
+            } else {
+                game->menu_selection = (game->menu_selection - 1);
+            }
+        } else if (p1_con->down) {
             game->menu_debounce = MENU_DEBOUNCE_FRAMES;
-        game->menu_selection = (game->menu_selection + 1) % array_len(menu_entries);
+            game->menu_selection = (game->menu_selection + 1) % array_len(menu_entries);
         }
     } else {
         game->menu_debounce -= 1;
@@ -554,12 +559,10 @@ void update_main_menu(game_state* game, screen_buffer* buffer) {
 }
 
 RUN_GAME_LOOP(run_game_loop) {
-    controller_state* keyboard_controller_state = &game->controllers[0];
-    player_state* player1 = &game->players[0];
-
     buffer_clear(buffer);
 
-    if (keyboard_controller_state->quit) {
+    // TODO: remove quit key?
+    if (game->controllers[0].quit) {
         game->mode = GAME_QUIT;
     }
 
@@ -579,10 +582,12 @@ RUN_GAME_LOOP(run_game_loop) {
             }
         }
 
-        update_player(player1, keyboard_controller_state, buffer);
+        for (u8 p_i = 0; p_i < game->num_players; ++p_i) {
+            update_player(&game->players[p_i], &game->controllers[p_i], buffer);
+            update_position(buffer, &game->players[p_i].phy);
+            update_bullets(buffer, game->players[p_i].bullets);
+        }
 
-        update_position(buffer, &player1->phy);
-        update_bullets(buffer, player1->bullets);
         update_enemies(buffer, game);
 
 #ifndef RELEASE
@@ -592,7 +597,10 @@ RUN_GAME_LOOP(run_game_loop) {
         render_ui(buffer, game);
         render_enemies(buffer, game->enemies);
         render_bullets(buffer, game);
-        render_player(buffer, player1);
+
+        for (u8 p_i = 0; p_i < game->num_players; ++p_i) {
+            render_player(buffer, &game->players[p_i]);
+        }
 
         if (player_all_dead(game)) {
             if (game->level_delay_frames == 0) {

@@ -13,8 +13,13 @@ void usleep(unsigned int useconds);  // get usleep with c99 enabled
 
 enum button_state { RELEASED, PRESSED, LAST_HELD_REPEATING };
 
-static void keyboard_state_update(const i8 fd, controller_state* ctrlr_state) {
+static void keyboard_state_update(game_state* game, const i8 fd) {
+    controller_state* p1_cont = &game->controllers[0];
+    controller_state* p2_cont = &game->controllers[1];
+    controller_state* p3_cont = &game->controllers[2];
+    controller_state* p4_cont = &game->controllers[3];
     struct input_event event;
+
     while (true) {
         i8 n = read(fd, &event, sizeof(event));
         if (n < (i8)sizeof(event)) {
@@ -28,54 +33,182 @@ static void keyboard_state_update(const i8 fd, controller_state* ctrlr_state) {
         }
 
         switch (event.code) {
+            // player 1 binds
             case KEY_Q: {
                 if (event.value == RELEASED) {
-                    ctrlr_state->quit = false;
+                    p1_cont->quit = false;
                 } else if (event.value == PRESSED) {
-                    ctrlr_state->quit = true;
+                    p1_cont->quit = true;
                 }
                 break;
             }
             case KEY_UP: {
                 if (event.value == RELEASED) {
-                    ctrlr_state->up = false;
+                    p1_cont->up = false;
                 } else if (event.value == PRESSED) {
-                    ctrlr_state->up = true;
+                    p1_cont->up = true;
                 }
                 break;
             }
             case KEY_LEFT: {
                 if (event.value == RELEASED) {
-                    ctrlr_state->left = false;
+                    p1_cont->left = false;
                 } else if (event.value == PRESSED) {
-                    ctrlr_state->left = true;
+                    p1_cont->left = true;
                 }
                 break;
             }
             case KEY_RIGHT: {
                 if (event.value == RELEASED) {
-                    ctrlr_state->right = false;
+                    p1_cont->right = false;
                 } else if (event.value == PRESSED) {
-                    ctrlr_state->right = true;
+                    p1_cont->right = true;
                 }
                 break;
             }
             case KEY_DOWN: {
                 if (event.value == RELEASED) {
-                    ctrlr_state->down = false;
+                    p1_cont->down = false;
                 } else if (event.value == PRESSED) {
-                    ctrlr_state->down = true;
+                    p1_cont->down = true;
                 }
                 break;
             }
-            case KEY_SPACE: {
+            case KEY_RIGHTCTRL: {
                 if (event.value == RELEASED) {
-                    ctrlr_state->shoot = false;
+                    p1_cont->shoot = false;
                 } else if (event.value == PRESSED) {
-                    ctrlr_state->shoot = true;
+                    p1_cont->shoot = true;
                 }
                 break;
             }
+
+            // player 2 binds
+            case KEY_I: {
+                if (event.value == RELEASED) {
+                    p2_cont->up = false;
+                } else if (event.value == PRESSED) {
+                    p2_cont->up = true;
+                }
+                break;
+            }
+            case KEY_J: {
+                if (event.value == RELEASED) {
+                    p2_cont->left = false;
+                } else if (event.value == PRESSED) {
+                    p2_cont->left = true;
+                }
+                break;
+            }
+            case KEY_L: {
+                if (event.value == RELEASED) {
+                    p2_cont->right = false;
+                } else if (event.value == PRESSED) {
+                    p2_cont->right = true;
+                }
+                break;
+            }
+            case KEY_K: {
+                if (event.value == RELEASED) {
+                    p2_cont->down = false;
+                } else if (event.value == PRESSED) {
+                    p2_cont->down = true;
+                }
+                break;
+            }
+            case KEY_M: {
+                if (event.value == RELEASED) {
+                    p2_cont->shoot = false;
+                } else if (event.value == PRESSED) {
+                    p2_cont->shoot = true;
+                }
+                break;
+            }
+
+            // player 3 binds
+            case KEY_T: {
+                if (event.value == RELEASED) {
+                    p3_cont->up = false;
+                } else if (event.value == PRESSED) {
+                    p3_cont->up = true;
+                }
+                break;
+            }
+            case KEY_F: {
+                if (event.value == RELEASED) {
+                    p3_cont->left = false;
+                } else if (event.value == PRESSED) {
+                    p3_cont->left = true;
+                }
+                break;
+            }
+            case KEY_H: {
+                if (event.value == RELEASED) {
+                    p3_cont->right = false;
+                } else if (event.value == PRESSED) {
+                    p3_cont->right = true;
+                }
+                break;
+            }
+            case KEY_G: {
+                if (event.value == RELEASED) {
+                    p3_cont->down = false;
+                } else if (event.value == PRESSED) {
+                    p3_cont->down = true;
+                }
+                break;
+            }
+            case KEY_V: {
+                if (event.value == RELEASED) {
+                    p3_cont->shoot = false;
+                } else if (event.value == PRESSED) {
+                    p3_cont->shoot = true;
+                }
+                break;
+            }
+
+            // player 4 binds
+            case KEY_W: {
+                if (event.value == RELEASED) {
+                    p4_cont->up = false;
+                } else if (event.value == PRESSED) {
+                    p4_cont->up = true;
+                }
+                break;
+            }
+            case KEY_A: {
+                if (event.value == RELEASED) {
+                    p4_cont->left = false;
+                } else if (event.value == PRESSED) {
+                    p4_cont->left = true;
+                }
+                break;
+            }
+            case KEY_D: {
+                if (event.value == RELEASED) {
+                    p4_cont->right = false;
+                } else if (event.value == PRESSED) {
+                    p4_cont->right = true;
+                }
+                break;
+            }
+            case KEY_S: {
+                if (event.value == RELEASED) {
+                    p4_cont->down = false;
+                } else if (event.value == PRESSED) {
+                    p4_cont->down = true;
+                }
+                break;
+            }
+            case KEY_Z: {
+                if (event.value == RELEASED) {
+                    p4_cont->shoot = false;
+                } else if (event.value == PRESSED) {
+                    p4_cont->shoot = true;
+                }
+                break;
+            }
+
             default: {
                 // do nothing
                 break;
@@ -84,10 +217,9 @@ static void keyboard_state_update(const i8 fd, controller_state* ctrlr_state) {
     }
 }
 
-static void update_inputs(game_state* state, i8* controller_fds) {
+static void update_inputs(game_state* game, i8* controller_fds) {
     const i8 keyboard_fd = controller_fds[0];
-    controller_state* keyboard_controller_state = &state->controllers[0];
-    keyboard_state_update(keyboard_fd, keyboard_controller_state);
+    keyboard_state_update(game, keyboard_fd);
 }
 
 static u8 count_input_devices(void) {

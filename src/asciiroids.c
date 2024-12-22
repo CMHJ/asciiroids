@@ -502,6 +502,40 @@ static void render_gameover_screen(screen_buffer* buffer) {
     print_xy(buffer, buffer->width / 2 - game_over_len / 2, buffer->height / 2 - 1, game_over_msg, game_over_len);
 }
 
+void update_main_menu(game_state* game, screen_buffer* buffer) {
+    static wchar_t* title = L"ASCIIROIDS";
+    static wchar_t* menu_entries[] = {L"Single Player", L"Two Players", L"Three Players", L"Four Players", L"Quit"};
+
+    u32 menu_start_y = buffer->height / 4 * 3;
+    print_xy(buffer, buffer->width / 2 - 5, menu_start_y, title, 10);
+
+    // update selection
+    controller_state* p1_con = &game->controllers[0];
+    if (p1_con->shoot) {
+        game->num_players = 1;
+        game->mode = GAME_NEW;
+    } else if (p1_con->up) {
+        if (game->menu_selection == 0) {
+            game->menu_selection = array_len(menu_entries) - 1;
+        } else {
+            game->menu_selection = (game->menu_selection - 1);
+        }
+    } else if (p1_con->down) {
+        game->menu_selection = (game->menu_selection + 1) % array_len(menu_entries);
+    }
+
+    // print menu entries
+    for (u8 m_i = 0; m_i < array_len(menu_entries); ++m_i) {
+        u8 string_len = wcslen(menu_entries[m_i]);
+        u32 x = buffer->width / 2 - string_len / 2;
+        print_xy(buffer, x, menu_start_y - 2 - m_i, menu_entries[m_i], string_len);
+
+        if (m_i == game->menu_selection) {
+            printwc_xy(buffer, x - 2, menu_start_y - 2 - m_i, L'>');
+        }
+    }
+}
+
 RUN_GAME_LOOP(run_game_loop) {
     controller_state* keyboard_controller_state = &game->controllers[0];
     player_state* player1 = &game->players[0];
@@ -517,38 +551,7 @@ RUN_GAME_LOOP(run_game_loop) {
     }
 
     if (game->mode == GAME_MAIN_MENU) {
-        static wchar_t* title = L"ASCIIROIDS";
-        static wchar_t* menu_entries[] = {L"Single Player", L"Two Players", L"Three Players", L"Four Players", L"Quit"};
-
-        u32 menu_start_y = buffer->height / 4 * 3;
-        print_xy(buffer, buffer->width / 2 - 5, menu_start_y, title, 10);
-
-        // update selection
-        controller_state* p1_con = &game->controllers[0];
-        if (p1_con->shoot) {
-            game->num_players = 1;
-            game->mode = GAME_NEW;
-        } else if (p1_con->up) {
-            if (game->menu_selection == 0) {
-                game->menu_selection = array_len(menu_entries) - 1;
-            } else {
-                game->menu_selection = (game->menu_selection - 1);
-            }
-        } else if (p1_con->down) {
-            game->menu_selection = (game->menu_selection + 1) % array_len(menu_entries);
-        }
-
-        // print menu entries
-        for (u8 m_i = 0; m_i < array_len(menu_entries); ++m_i) {
-            u8 string_len = wcslen(menu_entries[m_i]);
-            u32 x = buffer->width / 2 - string_len / 2;
-            print_xy(buffer, x, menu_start_y - 2 - m_i, menu_entries[m_i], string_len);
-
-            if (m_i == game->menu_selection) {
-                printwc_xy(buffer, x - 2, menu_start_y - 2 - m_i, L'>');
-            }
-        }
-
+        update_main_menu(game, buffer);
     } else if (game->mode == GAME_RUNNING) {
         // decrement level delay counter and check
         if (enemy_count(game) <= 0) {

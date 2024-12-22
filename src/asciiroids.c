@@ -283,7 +283,6 @@ static void enemy_kill(game_state* game, enemy_state* e) {
 
             break;
         }
-
         case SAUCER_SMALL: {
             e->type = DEAD;
             break;
@@ -292,7 +291,10 @@ static void enemy_kill(game_state* game, enemy_state* e) {
             e->type = DEAD;
             break;
         }
-        case DEAD:
+        case DEAD: {
+            // do nothing
+            break;
+        }
         default: {
             fprintf(stderr, "Error: unhandled case %d\n", (u32)e->type);
             exit(1);

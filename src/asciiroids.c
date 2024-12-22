@@ -503,6 +503,8 @@ static void render_gameover_screen(screen_buffer* buffer) {
 }
 
 void update_main_menu(game_state* game, screen_buffer* buffer) {
+    // arbitrary constant that felt alright
+    static const u8 MENU_DEBOUNCE_FRAMES = 10;
     static wchar_t* title = L"ASCIIROIDS";
     static wchar_t* menu_entries[] = {L"Single Player", L"Two Players", L"Three Players", L"Four Players", L"Quit"};
 
@@ -511,17 +513,32 @@ void update_main_menu(game_state* game, screen_buffer* buffer) {
 
     // update selection
     controller_state* p1_con = &game->controllers[0];
+    if (game->menu_debounce == 0) {
     if (p1_con->shoot) {
-        game->num_players = 1;
+            // max value is quit
+            if (game->menu_selection == (array_len(menu_entries) - 1)) {
+                game->num_players = 0;
+                game->mode = GAME_QUIT;
+            }
+            // else start game with selected players
+            else {
+                game->num_players = game->menu_selection + 1;
         game->mode = GAME_NEW;
+            }
     } else if (p1_con->up) {
+            game->menu_debounce = MENU_DEBOUNCE_FRAMES;
+
         if (game->menu_selection == 0) {
             game->menu_selection = array_len(menu_entries) - 1;
         } else {
             game->menu_selection = (game->menu_selection - 1);
         }
     } else if (p1_con->down) {
+            game->menu_debounce = MENU_DEBOUNCE_FRAMES;
         game->menu_selection = (game->menu_selection + 1) % array_len(menu_entries);
+        }
+    } else {
+        game->menu_debounce -= 1;
     }
 
     // print menu entries

@@ -136,6 +136,7 @@ typedef enum game_mode { GAME_NEW, GAME_MAIN_MENU, GAME_RUNNING, GAME_QUIT } gam
 typedef struct game_state {
     game_mode mode;
     u8 menu_selection;
+    u8 menu_debounce;
     u8 level;
     controller_state controllers[PLAYERS_MAX];
     u8 num_players;

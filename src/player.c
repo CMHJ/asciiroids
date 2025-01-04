@@ -9,6 +9,7 @@ static void update_player(player_state* player, controller_state* controller, sc
     if (player->respawn_frames > 0) {
         player->respawn_frames -= 1;
 
+        // TODO: respawn player according to starting spawn position
         // respawn player
         if (player->respawn_frames <= 0 && player->lives > 0) {
             player->alive = true;

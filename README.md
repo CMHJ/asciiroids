@@ -1,6 +1,30 @@
 # Asciiroids
 
-Requires root to detect the keyboard and read the keyboard inputs directly as opposed to using stdin which has limitations when used as a game controller.
+![4 Player Clip](./resources/4-player-clip.gif)
+
+Simple space game made with the intention to explore creating a game in a terminal environment and see whether an action
+game of some kind could be made.
+The engine is very rudimentary with many rough edges that have not been smoothed over, such as the explicit screen to ask
+for the player to press a button on the keyboard to detect it.
+
+Game is multiplayer cooperative up to four players.
+The game is over when all players have expended all their lives.
+Shoot the rocks to get points.
+Shoot the aliens for more points.
+
+Seconds of fun for the whole family!
+
+Enjoy :P
+
+## Controls
+
+Player 1: Arrows to move, Right Ctrl to shoot
+
+Player 2: IJKL to move, M to shoot
+
+Player 3: TFGH to move, V to shoot
+
+Player 4: WASD to move, Z to shoot
 
 # Setup
 

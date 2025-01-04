@@ -30,7 +30,8 @@ typedef struct game_code {
 static void controllers_init(i8* controller_fds) {
     // get inputs
     // TODO(CMHJ): convert these back to printf and remove wide versions
-    wprintf(L"Press the enter key...\n");
+    wprintf(L"Detecting keyboard\n");
+    wprintf(L"Press the right ctrl key...\n");
     // funnily enough this seems to detect the enter key event from starting the program
     const i8 keyboard_fd = keyboard_detect();
 

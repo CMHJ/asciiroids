@@ -283,7 +283,7 @@ static i8 keyboard_detect(void) {
                 continue;
             }
 
-            if (event.code == KEY_ENTER) {
+            if (event.code == KEY_RIGHTCTRL) {
                 keyboard_found = true;
                 keyboard_fd = input_device_fd;
             }

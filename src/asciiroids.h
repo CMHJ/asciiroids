@@ -95,6 +95,7 @@ typedef struct player_state {
     u16 shot_cooloff_frames;
     u16 respawn_frames;
     u32 score;
+    v2 starting_pos;
 } player_state;
 
 static const v2 PLAYER_SIZE = {1.0f, 1.0f};

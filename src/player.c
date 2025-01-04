@@ -9,13 +9,12 @@ static void update_player(player_state* player, controller_state* controller, sc
     if (player->respawn_frames > 0) {
         player->respawn_frames -= 1;
 
-        // TODO: respawn player according to starting spawn position
         // respawn player
         if (player->respawn_frames <= 0 && player->lives > 0) {
             player->alive = true;
             player->lives -= 1;
             player->shot_cooloff_frames = 0;
-            player->phy.pos = (v2){buffer->width / 2, buffer->height / 2};
+            player->phy.pos = player->starting_pos;
             player->phy.vel = (v2){0.0f, 0.0f};
             player->phy.yaw = 90.0f;
         }

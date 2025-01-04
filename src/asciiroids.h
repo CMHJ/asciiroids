@@ -129,7 +129,6 @@ static const u8 ENEMY_SCORES[TOTAL_ENEMY_TYPES] = {0, 10, 10, 10, 50, 100};
 
 typedef enum game_mode { GAME_NEW, GAME_MAIN_MENU, GAME_RUNNING, GAME_QUIT } game_mode;
 
-// TODO: change this to max players and allow multiplayer
 #define PLAYERS_MAX 4
 #define MAX_ENEMIES 100
 #define NEW_LEVEL_ASTEROID_COUNT 4
